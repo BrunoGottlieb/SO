@@ -36,25 +36,7 @@ namespace SO_T1
                 Console.WriteLine(i + " : " + cpu.programMemory[i]);
             }
 
-            API.InitializeCPU(status); // inicializa o estado da cpu
-
-            API.UpdateCPUStatus(cpu, status); // altera o estado da cpu
-
-            API.SetCPUDataMemory(cpu, dados); // envia os dados para a cpu
-
-            while (API.GetCPUInterruptionCode(cpu) == normal)
-            {
-                API.ExecuteCPU(cpu); // executa as instrucoes caso a cpu esteja em estado normal
-            }
-
-            if(debugMode)
-            {
-                Console.WriteLine("----------");
-
-                Console.WriteLine("CPU parou na instrução " + cpu.programMemory[cpu.status.PC] + " (deve ser PARA)");
-                Console.WriteLine("O valor de m[0] é " + cpu.dataMemory[0] + " (deve ser 42)");
-            }
+            SO.Initialize(cpu, status, dados);
         }
-
     }
 }
