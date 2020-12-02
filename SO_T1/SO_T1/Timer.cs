@@ -41,6 +41,7 @@ namespace SO_T1
         // Essa função pode ser chamada diversas vezes, para se saber se tem várias interrupções no mesmo tempo – o timer “esquece” cada interrupção que ele retorna
         public int GetInterruption()
         {
+            if(queue.Count == 0) { return 0; }
             if(currentTime < queue[0].date) { return 0; } // caso ainda nao haja interrupcoes
             else
             {
