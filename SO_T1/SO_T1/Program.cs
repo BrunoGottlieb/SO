@@ -6,10 +6,6 @@ namespace SO_T1
 {
     class Program
     {
-        public const int normal = 0;
-        public const int ilegal = 1;
-        public const int violacao = 2;
-
         public const bool debugMode = true;
 
         static void Main(string[] args)
@@ -24,7 +20,7 @@ namespace SO_T1
             {
                 string content = File.ReadAllText(path);
                 string[] array = content.Split("\n");
-                API.SetCPUProgramMemory(cpu, array); // manda as instrucoes para a cpu
+                cpu.SetCPUProgramMemory(cpu, array); // manda as instrucoes para a cpu
             }
             else
             {

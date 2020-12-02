@@ -8,18 +8,18 @@ namespace SO_T1
     {
         public static void Initialize(CPU cpu, Status status, int[] dados)
         {
-            API.InitializeCPU(status); // inicializa o estado da cpu
+            cpu.InitializeCPU(status); // inicializa o estado da cpu
 
-            API.UpdateCPUStatus(cpu, status); // altera o estado da cpu
+            cpu.UpdateCPUStatus(cpu, status); // altera o estado da cpu
 
-            API.SetCPUDataMemory(cpu, dados); // envia os dados para a cpu
+            cpu.SetCPUDataMemory(cpu, dados); // envia os dados para a cpu
 
-            InterruptionManager.Execution(cpu);
+            cpu.InterruptionManager();
         }
 
         public static void Execute(CPU cpu)
         {
-            API.ExecuteCPU(cpu); // executa as instrucoes caso a cpu esteja em estado normal
+            //cpu.ExecuteCPU(cpu); // executa as instrucoes caso a cpu esteja em estado normal
         }
 
         public static void IlegalHandler(CPU cpu)
@@ -30,7 +30,7 @@ namespace SO_T1
             Environment.Exit(0);
         }
 
-        public static void ViolationHandler()
+        public static void ViolationHandler(CPU cpu)
         {
             Console.WriteLine("\nViolation ended");
             Environment.Exit(0);
