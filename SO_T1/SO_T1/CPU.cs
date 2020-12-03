@@ -4,11 +4,19 @@ using System.Text;
 
 namespace SO_T1
 {
+    class Status
+    {
+        public int PC { get; set; } // registrador | o contador de programa
+        public int A { get; set; } // registrador | acumulador
+        public int InterruptionCode { get; set; }// codigo de interrupcao // 0 normal | 1 instrucao ilegal | 2 violacao de memoria
+    }
+
     class CPU
     {
         public const int normal = 0;
         public const int ilegal = 1;
         public const int violacao = 2;
+        public const int sleeping = 3;
 
         public Status status = new Status(); // estado da CPU
 
@@ -34,11 +42,21 @@ namespace SO_T1
                 {
                     SO.ViolationHandler(this);
                 }
+                else if (status.InterruptionCode == sleeping)
+                {
+                    // nothing
+                }
 
                 // ficar chamando esse metodo enquanto houver interrupcao
-                int interruptionCode = timer.UpdateTime();
+                int interruptionCode = 0;
+                do
+                {
+                    interruptionCode = timer.UpdateTime();
+                } while (interruptionCode != 0);
             }
         }
+
+        #region API
 
         // altera o valor do acumulador
         public void SetCPU_A(Status e, int newValue)
@@ -240,5 +258,8 @@ namespace SO_T1
 
             }
         }
+
+        #endregion
+
     }
 }

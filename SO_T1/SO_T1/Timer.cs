@@ -69,7 +69,7 @@ namespace SO_T1
             {
                 index++;
             }
-            queue.Insert(index, newSchedule);
+            queue.Insert(index, newSchedule); // insere ordenado
         }
 
     }
