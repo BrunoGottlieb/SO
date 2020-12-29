@@ -29,6 +29,7 @@ namespace SO_T1
                 if (interruptionCode == normal)
                 {
                     cpu.ExecuteCPU(cpu);
+                    //cpu.UpdatePC(cpu); /// retirar depois
                 }
                 else if (interruptionCode == ilegal)
                 {
@@ -46,10 +47,10 @@ namespace SO_T1
                 // ficar chamando esse metodo enquanto houver interrupcao
                 do
                 {
-                    //interruptionCode = timer.UpdateTime();
-                    interruptionCode = Timer.UpdateTime();
+                    interruptionCode = Timer.UpdateTime(cpu);
                 }
                 while (interruptionCode != normal);
+
             }
         }
     }

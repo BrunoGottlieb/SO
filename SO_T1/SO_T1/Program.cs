@@ -10,7 +10,7 @@ namespace SO_T1
 
         static void Main(string[] args)
         {
-            string path = "C://teste/SA.txt"; // diretorio
+            string path = "C://teste/SS.txt"; // diretorio
             int[] dados = new int[4]; // // dados do programa
 
             CPU cpu = new CPU(); // instancia da CPU

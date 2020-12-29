@@ -8,6 +8,7 @@ namespace SO_T1
     {
         public char type { get; set; } // tipo de agendamento de interrupcao
         public int date { get; set; } // quando
+        public int period { get; set; } // tempo original
         public int interruptionCode { get; set; } // que interrupcao sera gerada
     }
 
@@ -25,10 +26,11 @@ namespace SO_T1
         }
 
         // informar a passagem do tempo (ele simplesmente incrementa um contador interno)
-        public static int UpdateTime()
+        public static int UpdateTime(CPU cpu)
         {
             currentTime++;
-            return GetInterruption(); // checa se ele esta causando alguma interrupcao
+            Console.WriteLine("Timer current time: " + currentTime);
+            return GetInterruption(cpu); // checa se ele esta causando alguma interrupcao
         }
 
         // ler o tempo atual (retorna o valor atual do contador)
@@ -39,10 +41,10 @@ namespace SO_T1
 
         // verificar se tem uma interrupção pendente - ele retorna o código da interrupção ou um código para dizer que não tem nenhuma interrupção.
         // Essa função pode ser chamada diversas vezes, para se saber se tem várias interrupções no mesmo tempo – o timer “esquece” cada interrupção que ele retorna
-        public static int GetInterruption()
+        public static int GetInterruption(CPU cpu)
         {
-            if(queue.Count == 0) { return 0; }
-            if(currentTime < queue[0].date) { return 0; } // caso ainda nao haja interrupcoes
+            if(queue.Count == 0) { return 0; } // nao ha interrupcoes
+            if(currentTime < queue[0].date) { return 0; } // ainda nao chegou a interrupcao
             else
             {
                 Schedule schedule = new Schedule();
@@ -50,8 +52,9 @@ namespace SO_T1
                 queue.RemoveAt(0); // remove da fila
                 if(schedule.type == 'P')
                 {
-                    NewInterruption('P', schedule.date + currentTime, schedule.interruptionCode); // reinsere as periodicas
+                    NewInterruption('P', schedule.period + currentTime, schedule.interruptionCode); // reinsere as periodicas
                 }
+                SO.TimerCallBack(cpu);
                 return schedule.interruptionCode; // retorna o codigo da interrupcao
             }
         }
@@ -61,8 +64,11 @@ namespace SO_T1
         {
             Schedule newSchedule = new Schedule();
             newSchedule.type = type;
-            newSchedule.date = date;
+            newSchedule.period = date;
+            newSchedule.date = currentTime + date;
             newSchedule.interruptionCode = interruptionCode;
+
+            Console.WriteLine("Creating new interruption for time: " + newSchedule.date);
 
             int index = 0;
             if (queue.Count > 0)
