@@ -10,30 +10,32 @@ namespace SO_T1
 
         static void Main(string[] args)
         {
-            string path = "C://teste/SS.txt"; // diretorio
-            int[] dados = new int[4]; // // dados do programa
-
             CPU cpu = new CPU(); // instancia da CPU
-            CPU s_cpu = new CPU(); // cpu simulada
-            Status status = new Status(); // instancia dos status do CPU
 
-            if (File.Exists(path)) // confere se o diretorio existe e le o seu conteudo
-            {
-                string content = File.ReadAllText(path);
-                string[] array = content.Split("\n");
-                cpu.SetCPUProgramMemory(cpu, array); // manda as instrucoes para a cpu
-            }
-            else
-            {
-                Console.WriteLine("Path " + path + " was not found.");
-            }
+            Job job1 = new Job();
+            job1.program = "1";
+            job1.input_path = "C://teste/SS.txt";
+            job1.output_path = "C://teste/ES/";
+            job1.launchDate = 0;
+            job1.memory = 100;
+            job1.priority = 1;
 
-            /*for (int i = 0; i < cpu.programMemory.Length; i++) // exibe o conteudo da memoria de programa [instrucoes]
-            {
-                Console.WriteLine(i + " : " + cpu.programMemory[i]);
-            }*/
+            Job job2 = new Job();
+            job2.program = "2";
+            job2.input_path = "C://teste/SO.txt";
+            job2.output_path = "C://teste/ES/";
+            job2.launchDate = 0;
+            job2.memory = 100;
+            job2.priority = 1;
 
-            SO.Initialize(cpu, status, dados);
+            List<Job> jobs = new List<Job>();
+            jobs.Add(job1);
+            jobs.Add(job2);
+
+            SO.SetJobList(jobs);
+            SO.JobManager();
+
+            //SO.Initialize(cpu, status, dados);
         }
     }
 }

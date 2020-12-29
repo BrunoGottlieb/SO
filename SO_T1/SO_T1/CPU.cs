@@ -19,104 +19,104 @@ namespace SO_T1
         public const int violacao = 2;
         public const int sleeping = 3;
 
-        public Status status = new Status(); // estado da CPU
+        public static Status status = new Status(); // estado da CPU
 
-        public string[] programMemory; // memoria de programa
-        public int[] dataMemory; // memoria de dados
+        public static string[] programMemory; // memoria de programa
+        public static int[] dataMemory; // memoria de dados
 
         #region API
 
-        public int value = 0;
+        public static int value = 0;
 
         // altera o valor do acumulador
-        public void SetCPU_A(Status e, int newValue)
+        public static void SetCPU_A(Status e, int newValue)
         {
             e.A = newValue;
         }
         // retorna o valor do acumulador
-        public int GetCPU_A(Status e)
+        public static int GetCPU_A(Status e)
         {
             return e.A;
         }
 
         // alterar o conteúdo da memória de programa (recebe um vetor de strings)
-        public void SetCPUProgramMemory(CPU cpu, string[] newData)
+        public static void SetCPUProgramMemory(string[] newData)
         {
-            cpu.programMemory = newData;
+            programMemory = newData;
         }
 
         // alterar o conteúdo da memória de dados (recebe um vetor de inteiros, que é alterado pela execução das instruções)
-        public void SetCPUDataMemory(CPU cpu, int[] newData)
+        public static void SetCPUDataMemory(int[] newData)
         {
-            cpu.dataMemory = newData;
+            dataMemory = newData;
         }
 
         // obter o conteúdo da memória de dados (retorna um vetor de inteiros que é o conteúdo atual da memória – não precisa desta função caso o vetor passado pela função acima seja alterado “in loco”)
-        public int[] GetCPUDataMemory(CPU cpu)
+        public static int[] GetCPUDataMemory()
         {
-            return cpu.dataMemory;
+            return dataMemory;
         }
 
         // ler o modo de interrupção da CPU (normal ou um motivo de interrupção)
-        public int GetCPUInterruptionCode(CPU c)
+        public static int GetCPUInterruptionCode()
         {
-            return c.status.InterruptionCode;
+            return status.InterruptionCode;
         }
 
         // colocar a CPU em modo normal (coresponde ao retorno de interrupção) – muda para modo normal e incrementa o PC; se já estiver em modo normal, não faz nada
-        public int GetCPUInterruptionMode(CPU cpu)
+        public static int GetCPUInterruptionMode()
         {
-            return cpu.status.InterruptionCode;
+            return status.InterruptionCode;
         }
 
         // obter a instrução em PC (que pode ser inválida se PC estiver fora da memória de programa)
-        public string GetPCInstruction(CPU cpu)
+        public static string GetPCInstruction()
         {
-            return cpu.programMemory[cpu.status.PC];
+            return programMemory[status.PC];
         }
 
         // obter o estado interno da CPU (retorna o valor de todos os registradores)
-        public Status GetCPUStatus(CPU cpu)
+        public static Status GetCPUStatus()
         {
-            return cpu.status;
+            return status;
         }
 
         // alterar o estado interno da CPU (copia para os registradores da cpu os valores recebidos)
-        public void UpdateCPUStatus(CPU cpu, Status e)
+        public static void UpdateCPUStatus(Status e)
         {
-            cpu.status = e;
+            status = e;
         }
 
         // inicializar o estado interno da CPU (PC=0, A=0, estado=normal)
-        public void InitializeCPU(Status e)
+        public static void InitializeCPU(Status e)
         {
             e.PC = 0;
             e.A = 0;
             e.InterruptionCode = normal; // normal
         }
 
-        public int GetMemoryDataSize(CPU cpu)
+        public static int GetMemoryDataSize()
         {
-            return cpu.dataMemory.Length;
+            return dataMemory.Length;
         }
 
-        public void UpdatePC(CPU cpu)
+        public static void UpdatePC()
         {
-            cpu.status.PC++;
+            status.PC++;
         }
 
         // executar uma instrução (só executa se estiver em modo normal)
-        public void ExecuteCPU(CPU cpu)
+        public static void ExecuteCPU()
         {
-            if (GetCPUInterruptionMode(cpu) == normal)
+            if (GetCPUInterruptionMode() == normal)
             {
-                Console.WriteLine("Executing");
+                //Console.WriteLine("Executing");
 
                 bool updatePC = true; // controla se o PC devera ser atualizado ao terminar a execucao da instrucao
 
-                Status status = GetCPUStatus(cpu);
+                Status status = GetCPUStatus();
 
-                string origem = GetPCInstruction(cpu); // retorna a instrucao atual do PC
+                string origem = GetPCInstruction(); // retorna a instrucao atual do PC
 
                 string[] instrucao = origem.Split(' ');
                 string instruction = instrucao[0];
@@ -131,7 +131,7 @@ namespace SO_T1
 
                 // DEBUG
                 {
-                    Console.WriteLine("instruction: " + instruction + " " +  value);
+                    Console.WriteLine("\ninstruction: " + instruction + " " +  value);
                 }
 
                 if (instruction == "CARGI") // coloca o valor n no acumulador (A=n)
@@ -141,8 +141,8 @@ namespace SO_T1
 
                 else if (instruction == "CARGM") // coloca no acumulador o valor na posição n da memória de dados (A=M[n])
                 {
-                    int[] data = GetCPUDataMemory(cpu);
-                    if (value < GetMemoryDataSize(cpu))
+                    int[] data = GetCPUDataMemory();
+                    if (value < GetMemoryDataSize())
                     {
                         status.A = data[value];
                     }
@@ -156,7 +156,7 @@ namespace SO_T1
                 {
                     //int[] data = GetCPUDataMemory(cpu);
                     int pos = 0;
-                    if (value < GetMemoryDataSize(cpu))
+                    if (value < GetMemoryDataSize())
                     {
                         pos = dataMemory[value];
                         status.A = pos;
@@ -170,10 +170,10 @@ namespace SO_T1
                 else if (instruction == "ARMM") // coloca o valor do acumulador na posição n da memória de dados (M[n]=A)
                 {
                     //int[] data = GetCPUDataMemory(cpu);
-                    if (value < GetMemoryDataSize(cpu))
+                    if (value < GetMemoryDataSize())
                     {
                         dataMemory[value] = GetCPU_A(status);
-                        SetCPUDataMemory(cpu, dataMemory);
+                        SetCPUDataMemory(dataMemory);
                     }
                     else
                     {
@@ -185,11 +185,11 @@ namespace SO_T1
                 else if (instruction == "ARMX") // 	coloca o valor do acumulador posição que está na posição n da memória de dados (M[M[n]]=A)
                 {
                     //int[] data = GetCPUDataMemory(cpu);
-                    if (value < GetMemoryDataSize(cpu))
+                    if (value < GetMemoryDataSize())
                     {
                         int pos = dataMemory[value];
                         dataMemory[pos] = GetCPU_A(status);
-                        SetCPUDataMemory(cpu, dataMemory);
+                        SetCPUDataMemory(dataMemory);
                     }
                     else
                     {
@@ -200,9 +200,9 @@ namespace SO_T1
 
                 else if (instruction == "SOMA") // 	soma ao acumulador o valor no endereço n da memória de dados (A=A+M[n])
                 {
-                    if (value < GetMemoryDataSize(cpu))
+                    if (value < GetMemoryDataSize())
                     {
-                        status.A = status.A + cpu.dataMemory[value];
+                        status.A = status.A + dataMemory[value];
                     }
                     else
                     {
@@ -230,9 +230,9 @@ namespace SO_T1
                     updatePC = false;
                 }
 
-                UpdateCPUStatus(cpu, status); // atualiza o estado da CPU com os novos dados
+                UpdateCPUStatus(status); // atualiza o estado da CPU com os novos dados
 
-                if (updatePC) { UpdatePC(cpu); }
+                if (updatePC) { UpdatePC(); }
 
             }
         }

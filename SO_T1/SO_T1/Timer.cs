@@ -26,11 +26,11 @@ namespace SO_T1
         }
 
         // informar a passagem do tempo (ele simplesmente incrementa um contador interno)
-        public static int UpdateTime(CPU cpu)
+        public static int UpdateTime()
         {
             currentTime++;
             Console.WriteLine("Timer current time: " + currentTime);
-            return GetInterruption(cpu); // checa se ele esta causando alguma interrupcao
+            return GetInterruption(); // checa se ele esta causando alguma interrupcao
         }
 
         // ler o tempo atual (retorna o valor atual do contador)
@@ -41,7 +41,7 @@ namespace SO_T1
 
         // verificar se tem uma interrupção pendente - ele retorna o código da interrupção ou um código para dizer que não tem nenhuma interrupção.
         // Essa função pode ser chamada diversas vezes, para se saber se tem várias interrupções no mesmo tempo – o timer “esquece” cada interrupção que ele retorna
-        public static int GetInterruption(CPU cpu)
+        public static int GetInterruption()
         {
             if(queue.Count == 0) { return 0; } // nao ha interrupcoes
             if(currentTime < queue[0].date) { return 0; } // ainda nao chegou a interrupcao
@@ -54,7 +54,7 @@ namespace SO_T1
                 {
                     NewInterruption('P', schedule.period + currentTime, schedule.interruptionCode); // reinsere as periodicas
                 }
-                SO.TimerCallBack(cpu);
+                SO.TimerCallBack();
                 return schedule.interruptionCode; // retorna o codigo da interrupcao
             }
         }
@@ -68,7 +68,7 @@ namespace SO_T1
             newSchedule.date = currentTime + date;
             newSchedule.interruptionCode = interruptionCode;
 
-            Console.WriteLine("Creating new interruption for time: " + newSchedule.date);
+            Console.WriteLine("\nCreating new interruption for time: " + newSchedule.date);
 
             int index = 0;
             if (queue.Count > 0)

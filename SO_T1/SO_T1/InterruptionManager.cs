@@ -11,7 +11,7 @@ namespace SO_T1
         public const int violacao = 2;
         public const int sleeping = 3;
 
-        public void Execute(CPU cpu)
+        public void Execute()
         {
             //Timer timer = new Timer();
             //timer.Initialize();
@@ -20,24 +20,24 @@ namespace SO_T1
 
             while (true) // laco que mantem o programa em execucao
             {
-                Console.WriteLine("Managing");
+                //Console.WriteLine("Managing");
 
-                Console.WriteLine("PC value: " + cpu.status.PC);
+                //Console.WriteLine("PC value: " + CPU.status.PC);
 
-                int interruptionCode = cpu.GetCPUInterruptionCode(cpu);
+                int interruptionCode = CPU.GetCPUInterruptionCode();
 
                 if (interruptionCode == normal)
                 {
-                    cpu.ExecuteCPU(cpu);
+                    CPU.ExecuteCPU();
                     //cpu.UpdatePC(cpu); /// retirar depois
                 }
                 else if (interruptionCode == ilegal)
                 {
-                    SO.IlegalHandler(cpu);
+                    SO.IlegalHandler();
                 }
                 else if (interruptionCode == violacao)
                 {
-                    SO.ViolationHandler(cpu);
+                    SO.ViolationHandler();
                 }
                 else if (interruptionCode == sleeping)
                 {
@@ -47,7 +47,7 @@ namespace SO_T1
                 // ficar chamando esse metodo enquanto houver interrupcao
                 do
                 {
-                    interruptionCode = Timer.UpdateTime(cpu);
+                    interruptionCode = Timer.UpdateTime();
                 }
                 while (interruptionCode != normal);
 
