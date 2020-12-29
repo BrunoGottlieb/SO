@@ -13,33 +13,33 @@ namespace SO_T1
 
     class Timer
     {
-        private List<Schedule> queue = new List<Schedule>();
+        private static List<Schedule> queue = new List<Schedule>();
         //private Queue<Schedule> queue = new Queue<Schedule>();
 
-        public int currentTime { get; set; }
+        public static int currentTime { get; set; }
 
-        public void Initialize()
+        public static void Initialize()
         {
             currentTime = 0;
             queue.Clear();
         }
 
         // informar a passagem do tempo (ele simplesmente incrementa um contador interno)
-        public int UpdateTime()
+        public static int UpdateTime()
         {
             currentTime++;
             return GetInterruption(); // checa se ele esta causando alguma interrupcao
         }
 
         // ler o tempo atual (retorna o valor atual do contador)
-        public int GetCurrentTime()
+        public static int GetCurrentTime()
         {
             return currentTime;
         }
 
         // verificar se tem uma interrupção pendente - ele retorna o código da interrupção ou um código para dizer que não tem nenhuma interrupção.
         // Essa função pode ser chamada diversas vezes, para se saber se tem várias interrupções no mesmo tempo – o timer “esquece” cada interrupção que ele retorna
-        public int GetInterruption()
+        public static int GetInterruption()
         {
             if(queue.Count == 0) { return 0; }
             if(currentTime < queue[0].date) { return 0; } // caso ainda nao haja interrupcoes
@@ -57,7 +57,7 @@ namespace SO_T1
         }
 
         // gerar novas interrupções – deve informar o tipo (periódica ou não), o período (tempo entre interrupções) ou tempo até a interrupção, e o código da interrupção que será gerada
-        public void NewInterruption(char type, int date, int interruptionCode)
+        public static void NewInterruption(char type, int date, int interruptionCode)
         {
             Schedule newSchedule = new Schedule();
             newSchedule.type = type;
@@ -65,10 +65,14 @@ namespace SO_T1
             newSchedule.interruptionCode = interruptionCode;
 
             int index = 0;
-            while (queue[index].date < date)
+            if (queue.Count > 0)
             {
-                index++;
+                while (queue[index].date < date)
+                {
+                    index++;
+                }
             }
+            
             queue.Insert(index, newSchedule); // insere ordenado
         }
 

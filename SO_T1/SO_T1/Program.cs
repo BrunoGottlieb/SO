@@ -10,10 +10,11 @@ namespace SO_T1
 
         static void Main(string[] args)
         {
-            string path = "C://teste/SO.txt"; // diretorio
+            string path = "C://teste/SA.txt"; // diretorio
             int[] dados = new int[4]; // // dados do programa
 
             CPU cpu = new CPU(); // instancia da CPU
+            CPU s_cpu = new CPU(); // cpu simulada
             Status status = new Status(); // instancia dos status do CPU
 
             if (File.Exists(path)) // confere se o diretorio existe e le o seu conteudo
@@ -27,10 +28,10 @@ namespace SO_T1
                 Console.WriteLine("Path " + path + " was not found.");
             }
 
-            for (int i = 0; i < cpu.programMemory.Length; i++) // exibe o conteudo da memoria de programa [instrucoes]
+            /*for (int i = 0; i < cpu.programMemory.Length; i++) // exibe o conteudo da memoria de programa [instrucoes]
             {
                 Console.WriteLine(i + " : " + cpu.programMemory[i]);
-            }
+            }*/
 
             SO.Initialize(cpu, status, dados);
         }

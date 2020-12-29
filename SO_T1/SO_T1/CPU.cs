@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace SO_T1
@@ -23,40 +24,9 @@ namespace SO_T1
         public string[] programMemory; // memoria de programa
         public int[] dataMemory; // memoria de dados
 
-        public void InterruptionManager()
-        {
-            Timer timer = new Timer();
-            timer.Initialize();
-
-            while (true) // laco que mantem o programa em execucao
-            {
-                if (status.InterruptionCode == normal)
-                {
-                    ExecuteCPU(this);
-                }
-                else if (status.InterruptionCode == ilegal)
-                {
-                    SO.IlegalHandler(this);
-                }
-                else if (status.InterruptionCode == violacao)
-                {
-                    SO.ViolationHandler(this);
-                }
-                else if (status.InterruptionCode == sleeping)
-                {
-                    // nothing
-                }
-
-                // ficar chamando esse metodo enquanto houver interrupcao
-                int interruptionCode = 0;
-                do
-                {
-                    interruptionCode = timer.UpdateTime();
-                } while (interruptionCode != 0);
-            }
-        }
-
         #region API
+
+        public int value = 0;
 
         // altera o valor do acumulador
         public void SetCPU_A(Status e, int newValue)
@@ -130,11 +100,18 @@ namespace SO_T1
             return cpu.dataMemory.Length;
         }
 
+        public void UpdatePC(CPU cpu)
+        {
+            cpu.status.PC++;
+        }
+
         // executar uma instrução (só executa se estiver em modo normal)
         public void ExecuteCPU(CPU cpu)
         {
             if (GetCPUInterruptionMode(cpu) == normal)
             {
+                Console.WriteLine("Executing");
+
                 bool updatePC = true; // controla se o PC devera ser atualizado ao terminar a execucao da instrucao
 
                 Status status = GetCPUStatus(cpu);
@@ -146,15 +123,16 @@ namespace SO_T1
 
                 string valueTmp = origem.Remove(0, origem.IndexOf(' ') + 1);
 
-                int value = 0;
-                if (Char.IsDigit(valueTmp[0]))
-                    value = Convert.ToInt32(valueTmp);
 
-                /*if (debugMode)
+                string valueString = string.Join("", valueTmp.ToCharArray().Where(Char.IsDigit));
+
+                if (valueString.Length > 0)
+                    value = Convert.ToInt32(valueString);
+
+                // DEBUG
                 {
-                    Console.WriteLine("instruction: " + instruction);
-                    Console.WriteLine("Value: " + value);
-                }*/
+                    Console.WriteLine("instruction: " + instruction + " " +  value);
+                }
 
                 if (instruction == "CARGI") // coloca o valor n no acumulador (A=n)
                 {
@@ -254,7 +232,7 @@ namespace SO_T1
 
                 UpdateCPUStatus(cpu, status); // atualiza o estado da CPU com os novos dados
 
-                if (updatePC) { cpu.status.PC++; }
+                if (updatePC) { UpdatePC(cpu); }
 
             }
         }
