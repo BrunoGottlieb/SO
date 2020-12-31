@@ -37,9 +37,9 @@ namespace SO_T1
 
         public static void IlegalHandler()
         {
-            lastExecutionTime -= Timer.GetCurrentTime();
             Job b = JobManager.GetCurrentJob();
-            b.UpdateTimeExpent(lastExecutionTime); // atualiza o tempo de execucao do job
+            b.UpdateTimeSpent(Timer.GetCurrentTime() - lastExecutionTime); // atualiza o tempo de execucao do job
+            lastExecutionTime = Timer.GetCurrentTime(); // atualiza o tempo que o SO foi chamado pela ultima vez
 
             Status status = CPU.GetCPUStatus();
 
@@ -127,9 +127,16 @@ namespace SO_T1
         {
             if (CPU.GetCPUInterruptionCode() == sleeping) // CPU estava ociosa
             { 
-                lastExecutionTime -= Timer.GetCurrentTime();
-                JobManager.UpdateCPUIdleTime(lastExecutionTime); // atualiza o tempo com que a CPU ficou ociosa
-            } 
+                JobManager.UpdateCPUIdleTime(Timer.GetCurrentTime() - lastExecutionTime); // atualiza o tempo com que a CPU ficou ociosa
+            }
+            else
+            {
+                Job b = JobManager.GetCurrentJob(); // atualiza o tempo desse job antes de trocar para outro
+                b.UpdateTimeSpent(Timer.GetCurrentTime() - lastExecutionTime); // atualiza o tempo de execucao do job
+            }
+
+            lastExecutionTime = Timer.GetCurrentTime(); // atualiza o tempo que o SO foi chamado pela ultima vez
+
             j.jobStatus = ready;
             JobManager.InitNextJobOnCPU();
             CPU.UpdatePC();

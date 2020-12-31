@@ -24,7 +24,7 @@ namespace SO_T1
         public int jobStatus = ready; // status do programa
         public int launchDate; // data de lançamento (um inteiro, de acordo com o timer);
         public int priority; // prioridade (a ser usado de acordo com o escalonador);
-        public int timeExpent; // tempo que a CPU gastou executando esse processo
+        public int timeSpent; // tempo que a CPU gastou executando esse processo
         // CPU
         public Status cpu_status; // status da cpu
         public string[] programMemory; // memoria de programa
@@ -49,7 +49,7 @@ namespace SO_T1
             }
 
             jobStatus = ready;
-            timeExpent = 0;
+            timeSpent = 0;
             launchDate = Timer.GetCurrentTime();
             cpu_status = new Status();
             dataMemory = new int[memory];
@@ -59,9 +59,10 @@ namespace SO_T1
             //priority = x
         }
 
-        public void UpdateTimeExpent(int time)
+        public void UpdateTimeSpent(int time)
         {
-            timeExpent += time;
+            Console.Write("\nUpdating with time: " + time + "\n\n");
+            timeSpent += time;
         }
 
         public void UpdateJobCPUStatus(Status e) // salvar os dados do Job
@@ -85,7 +86,7 @@ namespace SO_T1
         public void UpdateJobStatus(int state)
         {
             jobStatus = state;
-            if(jobStatus == finished) { JobManager.RemoveJob(this); } // remove o jog finalizado da lista
+            if(jobStatus == finished) { JobManager.RemoveJob(this); Console.Write("Time Spent: " + timeSpent); } // remove o jog finalizado da lista
         }
     }
 }
