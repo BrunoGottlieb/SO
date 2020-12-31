@@ -13,9 +13,6 @@ namespace SO_T1
 
         public void Execute()
         {
-            //Timer timer = new Timer();
-            //timer.Initialize();
-
             Timer.Initialize();
 
             while (true) // laco que mantem o programa em execucao

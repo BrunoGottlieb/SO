@@ -6,6 +6,7 @@ namespace SO_T1
 {
     class Schedule
     {
+        public Job job { get; set; } // job que causou essa interrupcao
         public char type { get; set; } // tipo de agendamento de interrupcao
         public int date { get; set; } // quando
         public int period { get; set; } // tempo original
@@ -52,17 +53,18 @@ namespace SO_T1
                 queue.RemoveAt(0); // remove da fila
                 if(schedule.type == 'P')
                 {
-                    NewInterruption('P', schedule.period + currentTime, schedule.interruptionCode); // reinsere as periodicas
+                    NewInterruption(schedule.job, 'P', schedule.period + currentTime, schedule.interruptionCode); // reinsere as periodicas
                 }
-                SO.TimerCallBack();
+                SO.TimerCallBack(schedule.job);
                 return schedule.interruptionCode; // retorna o codigo da interrupcao
             }
         }
 
         // gerar novas interrupções – deve informar o tipo (periódica ou não), o período (tempo entre interrupções) ou tempo até a interrupção, e o código da interrupção que será gerada
-        public static void NewInterruption(char type, int date, int interruptionCode)
+        public static void NewInterruption(Job j, char type, int date, int interruptionCode)
         {
             Schedule newSchedule = new Schedule();
+            newSchedule.job = j;
             newSchedule.type = type;
             newSchedule.period = date;
             newSchedule.date = currentTime + date;

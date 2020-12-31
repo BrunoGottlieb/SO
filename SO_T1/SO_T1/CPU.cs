@@ -29,9 +29,9 @@ namespace SO_T1
         public static int value = 0;
 
         // altera o valor do acumulador
-        public static void SetCPU_A(Status e, int newValue)
+        public static void SetCPU_A(int newValue)
         {
-            e.A = newValue;
+            status.A = newValue;
         }
         // retorna o valor do acumulador
         public static int GetCPU_A(Status e)
@@ -88,11 +88,11 @@ namespace SO_T1
         }
 
         // inicializar o estado interno da CPU (PC=0, A=0, estado=normal)
-        public static void InitializeCPU(Status e)
+        public static void InitializeCPU()
         {
-            e.PC = 0;
-            e.A = 0;
-            e.InterruptionCode = normal; // normal
+            status.PC = 0;
+            status.A = 0;
+            status.InterruptionCode = normal; // normal
         }
 
         public static int GetMemoryDataSize()

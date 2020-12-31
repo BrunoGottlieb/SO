@@ -9,55 +9,22 @@ namespace SO_T1
     {
         static string path = "C://teste/ES/"; // diretorio
 
+        // Constantes da CPU
         public const int normal = 0;
         public const int ilegal = 1;
         public const int violacao = 2;
         public const int sleeping = 3;
 
-        public static List<Job> jobs = new List<Job>();
+        // Constantes de Job
+        public const int ready = 0;
+        public const int blocked = 1;
+        public const int finished = 2;
 
-        public static void SetJobList(List<Job> j) // enche o SO com a lista de jobs
+        public static void Initialize()
         {
-            jobs = j;
-        }
+            CPU.InitializeCPU();
 
-        public static void JobManager() // gerencia os jobs a serem executados
-        {
-            if(jobs.Count == 0) // nao ha mais nenhum job na lista
-            {
-                Console.WriteLine("No more jobs to be executed");
-                Console.WriteLine("Finishing with success");
-                Environment.Exit(0);
-            }
-
-            Job targetJob = jobs[0];
-            jobs.RemoveAt(0);
-
-            Initialize(targetJob); // inicializa o proximo job da lista
-        }
-
-        public static void Initialize(Job j)
-        {
-            Console.WriteLine("-------- Initializing job: " + j.program + "--------");
-
-            Status status = new Status(); // instancia dos status do CPU
-
-            CPU.InitializeCPU(status); // inicializa o estado da cpu
-
-            CPU.UpdateCPUStatus(status); // altera o estado da cpu
-
-            CPU.SetCPUDataMemory(new int[j.memory]) ; // envia os dados para a cpu
-
-            if (File.Exists(j.input_path)) // confere se o diretorio existe e le o seu conteudo
-            {
-                string content = File.ReadAllText(j.input_path);
-                string[] array = content.Split("\n");
-                CPU.SetCPUProgramMemory(array); // manda as instrucoes para a cpu
-            }
-            else
-            {
-                Console.WriteLine("Path " + j.input_path + " was not found.");
-            }
+            JobManager.InitNextJobOnCPU(); // inicializa o Job na CPU
 
             InterruptionManager interruptionManager = new InterruptionManager();
 
@@ -89,14 +56,16 @@ namespace SO_T1
             if (instruction == "PARA")
             {
                 Console.WriteLine("\nIlegal ended\n");
-                JobManager(); // executa o proximo job da lista, se nao houver nenhum, finaliza
-                //Environment.Exit(0);
+                JobManager.SetCurrentJobStatus(finished); // esse programa terminou de ser executado
             }
             else
             {
                 Console.WriteLine("Memory Violation");
                 ViolationHandler(); // violacao de memoria
             }
+
+            JobManager.InitNextJobOnCPU(); // inicilizar CPU com os dados de um job
+
         }
 
         public static void ViolationHandler()
@@ -112,14 +81,18 @@ namespace SO_T1
             Status s = CPU.GetCPUStatus(); // salva o estado da CPU
             
             s.InterruptionCode = sleeping; // coloca a CPU em estado dormindo
-            CPU.UpdateCPUStatus(s);
 
             // realiza a operação 
             string fullPath = path + CPU.value.ToString() + ".txt";
             string content = File.ReadAllText(fullPath);
-            s.A = Int32.Parse(content);
+            CPU.SetCPU_A(Int32.Parse(content)); // atualiza o acumulador com o valor do input
+            //s.A = Int32.Parse(content);
 
-            Timer.NewInterruption('A', 5, ilegal); // programa o timer para gerar uma interrupção devido a esse dispositivo depois de um certo tempo e retorna
+            Job j = JobManager.GetCurrentJob();
+            j.UpdateJobCPUStatus(s); // salva o estado da CPU no job
+            j.UpdateJobStatus(blocked); // bloqueia o job
+
+            Timer.NewInterruption(j, 'A', 5, ilegal); // programa o timer para gerar uma interrupção devido a esse dispositivo depois de um certo tempo e retorna
 
             return;
         }
@@ -131,21 +104,32 @@ namespace SO_T1
             Status s = CPU.GetCPUStatus(); // salva o estado da CPU
             
             s.InterruptionCode = sleeping; // coloca a CPU em estado dormindo
-            CPU.UpdateCPUStatus(s);
 
             string fullPath = path + CPU.value.ToString() + ".txt"; // realiza a operação 
             File.WriteAllText(fullPath, s.A.ToString());
 
-            Timer.NewInterruption('A', 5, 1); // programa o timer para gerar uma interrupção devido a esse dispositivo depois de um certo tempo e retorna
+            Job j = JobManager.GetCurrentJob();
+            j.UpdateJobCPUStatus(s); // salva o estado da CPU no job
+            j.UpdateJobStatus(blocked); // bloqueia o job
+
+            Timer.NewInterruption(j, 'A', 5, 1); // programa o timer para gerar uma interrupção devido a esse dispositivo depois de um certo tempo e retorna
+
+            return;
         }
 
-        public static void TimerCallBack()
+        public static void TimerCallBack(Job j) // chamado apos uma interrupcao terminar
         {
-            Status s = CPU.GetCPUStatus();
-            s.InterruptionCode = normal;
+            j.jobStatus = ready;
+            JobManager.InitNextJobOnCPU();
             CPU.UpdatePC();
-            CPU.UpdateCPUStatus(s);
             return;
+        }
+
+        public static void FinishExecution()
+        {
+            Console.WriteLine("\nNo more jobs to be executed");
+            Console.WriteLine("Finishing with success");
+            Environment.Exit(0);
         }
 
     }
