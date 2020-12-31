@@ -24,6 +24,7 @@ namespace SO_T1
         public int jobStatus = ready; // status do programa
         public int launchDate; // data de lançamento (um inteiro, de acordo com o timer);
         public int priority; // prioridade (a ser usado de acordo com o escalonador);
+        public int timeExpent; // tempo que a CPU gastou executando esse processo
         // CPU
         public Status cpu_status; // status da cpu
         public string[] programMemory; // memoria de programa
@@ -48,16 +49,23 @@ namespace SO_T1
             }
 
             jobStatus = ready;
+            timeExpent = 0;
             launchDate = Timer.GetCurrentTime();
             cpu_status = new Status();
             dataMemory = new int[memory];
             isInitialized = true;
 
-            Console.WriteLine("\n\n-------- Initializing job: " + programName + "--------\n\n");
+            Console.WriteLine("\n\n-------- Initializing job: " + programName + " at time: " + launchDate + "--------\n\n");
             //priority = x
         }
 
+        public void UpdateTimeExpent(int time)
+        {
+            timeExpent += time;
+        }
+
         public void UpdateJobCPUStatus(Status e) // salvar os dados do Job
+
         {
             cpu_status = e;
             programMemory = CPU.programMemory;

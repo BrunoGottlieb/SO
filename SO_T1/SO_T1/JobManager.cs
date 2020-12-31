@@ -4,9 +4,11 @@ using System.Text;
 
 namespace SO_T1
 {
-    class JobManager
+    class JobManager // Escalonador
     {
         public static List<Job> jobs = new List<Job>();
+
+        private static int cpuIdleTime = 0;
 
         public static void SetJobList(List<Job> j) // enche o gerenciador com a lista de jobs
         {
@@ -15,8 +17,6 @@ namespace SO_T1
 
         public static bool InitNextJobOnCPU() // inicilizar CPU com os dados de um job
         {
-            Console.WriteLine("InitNextJobOnCPU");
-
             if (jobs.Count == 0) // nao ha mais nenhum job na lista
             {
                 SO.FinishExecution();
@@ -26,13 +26,12 @@ namespace SO_T1
             {
                 if (j.IsReady()) 
                 {
-                    Console.WriteLine(j.programName + " is ready");
                     if (!j.isInitialized) { j.Init(); } // inicializa o job
                     j.PutJobOnCPU(); // colocar os dados do job na CPU
                     return true; // sucesso
                 }
             }
-            Console.WriteLine("Nobody is ready");
+
             return false;
         }
 
@@ -50,11 +49,6 @@ namespace SO_T1
             }
 
             return null;
-
-            //Job targetJob = jobs[0];
-            //jobs.RemoveAt(0);
-
-            //Initialize(targetJob); // inicializa o proximo job da lista
         }
 
         public static void RemoveJob(Job j)
@@ -66,6 +60,11 @@ namespace SO_T1
         {
             Job j = GetCurrentJob();
             j.UpdateJobStatus(state);
+        }
+
+        public static void UpdateCPUIdleTime(int time)
+        {
+            cpuIdleTime += time;
         }
 
     }

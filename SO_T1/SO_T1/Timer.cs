@@ -75,7 +75,7 @@ namespace SO_T1
             int index = 0;
             if (queue.Count > 0)
             {
-                while (queue[index].date < date)
+                while (index < queue.Count && queue[index].date < date)
                 {
                     index++;
                 }

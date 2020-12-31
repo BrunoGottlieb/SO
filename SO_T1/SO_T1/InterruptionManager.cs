@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SO_T1
 {
-    class InterruptionManager
+    class InterruptionManager // Controlador
     {
         public const int normal = 0;
         public const int ilegal = 1;
@@ -17,10 +17,6 @@ namespace SO_T1
 
             while (true) // laco que mantem o programa em execucao
             {
-                //Console.WriteLine("Managing");
-
-                //Console.WriteLine("PC value: " + CPU.status.PC);
-
                 int interruptionCode = CPU.GetCPUInterruptionCode();
 
                 if (interruptionCode == normal)

@@ -20,6 +20,8 @@ namespace SO_T1
         public const int blocked = 1;
         public const int finished = 2;
 
+        private static int lastExecutionTime = 0;
+
         public static void Initialize()
         {
             CPU.InitializeCPU();
@@ -28,19 +30,23 @@ namespace SO_T1
 
             InterruptionManager interruptionManager = new InterruptionManager();
 
+            /// Timer.NewInterruption(JobManager.GetCurrentJob(), 'P', 50, ilegal); // interrupcao periodica do SO
+
             interruptionManager.Execute();
         }
 
         public static void IlegalHandler()
         {
+            lastExecutionTime -= Timer.GetCurrentTime();
+            Job b = JobManager.GetCurrentJob();
+            b.UpdateTimeExpent(lastExecutionTime); // atualiza o tempo de execucao do job
+
             Status status = CPU.GetCPUStatus();
 
             string origem = CPU.GetPCInstruction(); // retorna a instrucao atual do PC
 
             string[] instrucao = origem.Split(' ');
             string instruction = instrucao[0];
-
-            //Console.WriteLine("Instruction on Ilegal: " + instruction);
 
             // pede ao SO para fazer a leitura de um dado (inteiro) do dispositivo de E/S n; o dado será colocado no acumulador
             if (instruction == "LE")
@@ -92,7 +98,7 @@ namespace SO_T1
             j.UpdateJobCPUStatus(s); // salva o estado da CPU no job
             j.UpdateJobStatus(blocked); // bloqueia o job
 
-            Timer.NewInterruption(j, 'A', 5, ilegal); // programa o timer para gerar uma interrupção devido a esse dispositivo depois de um certo tempo e retorna
+            Timer.NewInterruption(j, 'A', j.read_delay, ilegal); // programa o timer para gerar uma interrupção devido a esse dispositivo depois de um certo tempo e retorna
 
             return;
         }
@@ -112,13 +118,18 @@ namespace SO_T1
             j.UpdateJobCPUStatus(s); // salva o estado da CPU no job
             j.UpdateJobStatus(blocked); // bloqueia o job
 
-            Timer.NewInterruption(j, 'A', 5, 1); // programa o timer para gerar uma interrupção devido a esse dispositivo depois de um certo tempo e retorna
+            Timer.NewInterruption(j, 'A', j.write_delay, ilegal); // programa o timer para gerar uma interrupção devido a esse dispositivo depois de um certo tempo e retorna
 
             return;
         }
 
         public static void TimerCallBack(Job j) // chamado apos uma interrupcao terminar
         {
+            if (CPU.GetCPUInterruptionCode() == sleeping) // CPU estava ociosa
+            { 
+                lastExecutionTime -= Timer.GetCurrentTime();
+                JobManager.UpdateCPUIdleTime(lastExecutionTime); // atualiza o tempo com que a CPU ficou ociosa
+            } 
             j.jobStatus = ready;
             JobManager.InitNextJobOnCPU();
             CPU.UpdatePC();
