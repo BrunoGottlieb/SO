@@ -11,8 +11,6 @@ namespace SO_T1
 
         private static Job currentJob; // job em execucao
 
-        private static int cpuIdleTime = 0;
-
         public static void SetJobList(List<Job> j) // enche o gerenciador com a lista de jobs
         {
             jobs = j;
@@ -44,6 +42,7 @@ namespace SO_T1
             {
                 if (!targetJob.isInitialized) { targetJob.Init(); } // inicializa o job
                 targetJob.PutJobOnCPU(); // colocar os dados do job na CPU
+                if(currentJob != targetJob) { SO.jobChangeCount++; } // atualiza o contador de troca de processos
                 currentJob = targetJob; // atualiza o processo que esta em execucao atualmente
             }
             
@@ -78,11 +77,6 @@ namespace SO_T1
         {
             Job j = GetCurrentJob();
             j.UpdateJobStatus(state);
-        }
-
-        public static void UpdateCPUIdleTime(int time)
-        {
-            cpuIdleTime += time;
         }
 
     }

@@ -27,13 +27,11 @@ namespace SO_T1
         public static void RestartQuantum()
         {
             currentQuantum = 0;
-            //Console.WriteLine("\nRestarting Quantum. Now: " + currentQuantum + "\n");
         }
 
         public static void UpdateQuantum()
         {
             currentQuantum++;
-            //Console.WriteLine("\nUpdating Quantum. Now: " + currentQuantum + "\n");
             CheckQuantum();
         }
 

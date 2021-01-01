@@ -79,7 +79,7 @@ namespace SO_T1
 
         public void UpdateTimeSpent(int time)
         {
-            Console.Write("\nUpdating with time: " + time + "\n\n");
+            //Console.Write("\nUpdating with time: " + time + "\n\n");
             timeSpent += time;
         }
 

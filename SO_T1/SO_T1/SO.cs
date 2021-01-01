@@ -21,6 +21,16 @@ namespace SO_T1
         private const int finished = 2;
 
         private static int lastExecutionTime = 0;
+        private static int SOcalledCount = 0;
+        private static int cpuIdleTime = 0;
+
+        private static int ilegalCount = 0;
+        private static int violationCount = 0;
+        private static int timerCallBackCount = 0;
+        private static int readCount = 0;
+        private static int writeCount = 0;
+        public static int jobChangeCount = 0;
+        private static int changesByQuantumCount = 0;
 
         public static void Initialize()
         {
@@ -38,6 +48,9 @@ namespace SO_T1
         public static void IlegalHandler()
         {
             Console.WriteLine("\nIlegal handler\n");
+
+            SOcalledCount++; // incrementa o numero de vezes que o SO foi chamado
+            ilegalCount++; // atualiza o numero de vezes que foi chamado por instrucao ilegal
 
             Job b = JobManager.GetCurrentJob();
             b.UpdateTimeSpent(Timer.GetCurrentTime() - lastExecutionTime); // atualiza o tempo de execucao do job
@@ -78,14 +91,15 @@ namespace SO_T1
 
         public static void ViolationHandler()
         {
+            violationCount++; // atualiza o numero de vezes que foi chamado por violacao
             Console.WriteLine("\nViolation ended");
             Environment.Exit(0);
         }
 
         private static void Read()
         {
-            Console.WriteLine("LE on SO");
-            
+            readCount++; // atualiza o numero de vezes que foi chamado por conta de leitura
+
             Status s = CPU.GetCPUStatus(); // salva o estado da CPU
             
             s.InterruptionCode = sleeping; // coloca a CPU em estado dormindo
@@ -94,7 +108,6 @@ namespace SO_T1
             string fullPath = path + CPU.value.ToString() + ".txt";
             string content = File.ReadAllText(fullPath);
             CPU.SetCPU_A(Int32.Parse(content)); // atualiza o acumulador com o valor do input
-            //s.A = Int32.Parse(content);
 
             Job j = JobManager.GetCurrentJob();
             j.UpdateJobCPUStatus(s); // salva o estado da CPU no job
@@ -107,8 +120,8 @@ namespace SO_T1
 
         private static void Write()
         {
-            Console.WriteLine("GRAVA on SO");
-            
+            writeCount++; // atualiza o numero de vezes que foi chamado por conta de escrita
+
             Status s = CPU.GetCPUStatus(); // salva o estado da CPU
             
             s.InterruptionCode = sleeping; // coloca a CPU em estado dormindo
@@ -129,15 +142,20 @@ namespace SO_T1
         {
             Console.WriteLine("\nTIMER CALLBACK\n");
 
+            timerCallBackCount++; // incrementa o numero de vezes que foi chamado pelo timer
+
+            SOcalledCount++; // incrementa o numero de vezes que o SO foi chamado
+
             if (CPU.GetCPUInterruptionCode() == sleeping) // CPU estava ociosa
             { 
-                JobManager.UpdateCPUIdleTime(Timer.GetCurrentTime() - lastExecutionTime); // atualiza o tempo com que a CPU ficou ociosa
+                cpuIdleTime += (Timer.GetCurrentTime() - lastExecutionTime); // atualiza o tempo com que a CPU ficou ociosa
             }
             else // havia um processo em execucao
             {
                 Job b = JobManager.GetCurrentJob(); // atualiza o tempo desse job antes de trocar para outro
                 b.UpdateTimeSpent(Timer.GetCurrentTime() - lastExecutionTime); // atualiza o tempo de execucao do job
-                b.exceedTimeCount++; // atualiza o número de vezes que perdeu a CPU por preempção
+                b.exceedTimeCount++; // atualiza o número de vezes que um processo perdeu a CPU por preempção
+                changesByQuantumCount++; // atualiza o numero de vezes que o SO foi chamado por preempção
             }
 
             lastExecutionTime = Timer.GetCurrentTime(); // atualiza o tempo que o SO foi chamado pela ultima vez
@@ -160,7 +178,7 @@ namespace SO_T1
 
         private static void ShowStats() // Exibe as estatisticas de execucao
         {
-            Console.WriteLine("\n********************************************\n");
+            Console.WriteLine("\n********************************************");
             Console.WriteLine("\n-- Program Stats --\n");
             foreach (Job j in JobManager.finishedJobs)
             {
@@ -171,7 +189,7 @@ namespace SO_T1
                 Console.WriteLine("Finish time: " + j.finishDate); // hora de término
                 // Tempo de retorno
                 Console.WriteLine("Time using CPU: " + j.timeSpent); // tempo de CPU
-                Console.WriteLine("CPU usage: " + ((float)j.timeSpent / (float)Timer.currentTime).ToString("0.00") + "%"); // percentual de CPU utilizada durante sua vida
+                Console.WriteLine("CPU usage: " + (((float)j.timeSpent / (float)Timer.currentTime)*100).ToString("00.00") + "%"); // percentual de CPU utilizada durante sua vida
                 Console.WriteLine("Time spent blocked: " + j.timeSpentBlocked); // Tempo que passou bloqueado
                 Console.WriteLine("Block count: " + j.blockCount); // número de vezes que bloqueou
                 Console.WriteLine("Called count: " + j.calledCount); // número de vezes que foi escalonado
@@ -181,11 +199,18 @@ namespace SO_T1
             Console.WriteLine("\n-- SO Stats --\n");
 
             Console.WriteLine("Total activity time: " + Timer.currentTime); // tempo em que o sistema esteve ativo
-            // tempo ocioso total da CPU
-            // quantas vezes o SO executou
-            // quantas por cada tipo de interrupção
-            // quantas trocas de processos houve
-            // quantas foram preempção
+            Console.WriteLine("CPU idle time: " + cpuIdleTime); // tempo ocioso total da CPU
+            Console.WriteLine("CPU time spent in idle: " + (((float)cpuIdleTime / (float)Timer.currentTime) * 100).ToString("00.00") + "%"); // tempo ocioso total da CPU
+            Console.WriteLine("SO execution count: " + SOcalledCount); // quantas vezes o SO executou
+            Console.WriteLine("Ilegal: " + ilegalCount); // quantas por cada tipo de interrupção
+            Console.WriteLine("Violation: " + violationCount); //
+            Console.WriteLine("Timer: " + timerCallBackCount); //
+            Console.WriteLine("Read: " + readCount); //
+            Console.WriteLine("Write: " + writeCount); //
+            Console.WriteLine("Change execution count: " + jobChangeCount); // quantas trocas de processos houve
+            Console.Write("Changes by quantum count: " + changesByQuantumCount); // quantas foram preempção
+            
+            Console.WriteLine("\n\n");
         }
 
     }
