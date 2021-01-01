@@ -10,15 +10,15 @@ namespace SO_T1
         static string path = "C://teste/ES/"; // diretorio
 
         // Constantes da CPU
-        public const int normal = 0;
-        public const int ilegal = 1;
-        public const int violacao = 2;
-        public const int sleeping = 3;
+        private const int normal = 0;
+        private const int ilegal = 1;
+        private const int violacao = 2;
+        private const int sleeping = 3;
 
         // Constantes de Job
-        public const int ready = 0;
-        public const int blocked = 1;
-        public const int finished = 2;
+        private const int ready = 0;
+        private const int blocked = 1;
+        private const int finished = 2;
 
         private static int lastExecutionTime = 0;
 
@@ -37,6 +37,8 @@ namespace SO_T1
 
         public static void IlegalHandler()
         {
+            Console.WriteLine("\nIlegal handler\n");
+
             Job b = JobManager.GetCurrentJob();
             b.UpdateTimeSpent(Timer.GetCurrentTime() - lastExecutionTime); // atualiza o tempo de execucao do job
             lastExecutionTime = Timer.GetCurrentTime(); // atualiza o tempo que o SO foi chamado pela ultima vez
@@ -123,31 +125,67 @@ namespace SO_T1
             return;
         }
 
-        public static void TimerCallBack(Job j) // chamado apos uma interrupcao terminar
+        public static void TimerCallBack(Job j, int newStatus) // chamado apos uma interrupcao terminar
         {
+            Console.WriteLine("\nTIMER CALLBACK\n");
+
             if (CPU.GetCPUInterruptionCode() == sleeping) // CPU estava ociosa
             { 
                 JobManager.UpdateCPUIdleTime(Timer.GetCurrentTime() - lastExecutionTime); // atualiza o tempo com que a CPU ficou ociosa
             }
-            else
+            else // havia um processo em execucao
             {
                 Job b = JobManager.GetCurrentJob(); // atualiza o tempo desse job antes de trocar para outro
                 b.UpdateTimeSpent(Timer.GetCurrentTime() - lastExecutionTime); // atualiza o tempo de execucao do job
+                b.exceedTimeCount++; // atualiza o número de vezes que perdeu a CPU por preempção
             }
 
             lastExecutionTime = Timer.GetCurrentTime(); // atualiza o tempo que o SO foi chamado pela ultima vez
 
-            j.jobStatus = ready;
-            JobManager.InitNextJobOnCPU();
-            CPU.UpdatePC();
+            j.UpdateJobStatus(newStatus);
+
+            if(CPU.GetCPUInterruptionCode() != 0) { CPU.UpdatePC(); } // CPU normalizou, atualiza o valor de PC
+
+            JobManager.InitNextJobOnCPU(); // chama outro processo para executar
             return;
         }
 
         public static void FinishExecution()
         {
-            Console.WriteLine("\nNo more jobs to be executed");
+            Console.WriteLine("\n\nNo more jobs to be executed");
             Console.WriteLine("Finishing with success");
+            ShowStats(); // Exibe as estatisticas de execucao
             Environment.Exit(0);
+        }
+
+        private static void ShowStats() // Exibe as estatisticas de execucao
+        {
+            Console.WriteLine("\n********************************************\n");
+            Console.WriteLine("\n-- Program Stats --\n");
+            foreach (Job j in JobManager.finishedJobs)
+            {
+                Console.WriteLine(" ");
+                Console.WriteLine(j.programName); // nome do processo
+                Console.WriteLine(" ");
+                Console.WriteLine("Start time: " + j.launchDate); // hora de início
+                Console.WriteLine("Finish time: " + j.finishDate); // hora de término
+                // Tempo de retorno
+                Console.WriteLine("Time using CPU: " + j.timeSpent); // tempo de CPU
+                Console.WriteLine("CPU usage: " + ((float)j.timeSpent / (float)Timer.currentTime).ToString("0.00") + "%"); // percentual de CPU utilizada durante sua vida
+                Console.WriteLine("Time spent blocked: " + j.timeSpentBlocked); // Tempo que passou bloqueado
+                Console.WriteLine("Block count: " + j.blockCount); // número de vezes que bloqueou
+                Console.WriteLine("Called count: " + j.calledCount); // número de vezes que foi escalonado
+                Console.WriteLine("Exceed quantum count: " + j.exceedTimeCount); // número de vezes que perdeu a CPU por preempção
+            }
+
+            Console.WriteLine("\n-- SO Stats --\n");
+
+            Console.WriteLine("Total activity time: " + Timer.currentTime); // tempo em que o sistema esteve ativo
+            // tempo ocioso total da CPU
+            // quantas vezes o SO executou
+            // quantas por cada tipo de interrupção
+            // quantas trocas de processos houve
+            // quantas foram preempção
         }
 
     }

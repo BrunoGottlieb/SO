@@ -7,9 +7,9 @@ namespace SO_T1
 {
     class Job
     {
-        public const int ready = 0;
-        public const int blocked = 1;
-        public const int finished = 2;
+        private const int ready = 0;
+        private const int blocked = 1;
+        private const int finished = 2;
 
         // Editavel pelo usuario
         public string programName; // programa que será executado pelo job
@@ -23,8 +23,15 @@ namespace SO_T1
         public bool isInitialized = false;
         public int jobStatus = ready; // status do programa
         public int launchDate; // data de lançamento (um inteiro, de acordo com o timer);
-        public int priority; // prioridade (a ser usado de acordo com o escalonador);
+        public int finishDate; // data em que o processo foi concluido
+        public float priority = 0.5f; // prioridade (a ser usado de acordo com o escalonador);
         public int timeSpent; // tempo que a CPU gastou executando esse processo
+        public int blockCount; // quantas vezes foi bloqueado
+        public int calledCount; // quantas vezes foi escalonado
+        public int exceedTimeCount; // número de vezes que perdeu a CPU por preempção
+        public int timeSpentBlocked; // tempo bloqueado
+        public int lastExecutionTime; // tempo da ultima execucao
+
         // CPU
         public Status cpu_status; // status da cpu
         public string[] programMemory; // memoria de programa
@@ -50,13 +57,24 @@ namespace SO_T1
 
             jobStatus = ready;
             timeSpent = 0;
+            blockCount = 0;
+            calledCount = 0;
+            exceedTimeCount = 0;
+            timeSpentBlocked = 0;
+            lastExecutionTime = 0;
             launchDate = Timer.GetCurrentTime();
+            priority = 0.5f;
             cpu_status = new Status();
             dataMemory = new int[memory];
             isInitialized = true;
 
-            Console.WriteLine("\n\n-------- Initializing job: " + programName + " at time: " + launchDate + "--------\n\n");
-            //priority = x
+            Console.WriteLine("\n\n-------- Initializing job: " + programName + " at time: " + launchDate + " --------\n\n");
+        }
+
+        private void UpdateJobPriority()
+        {
+            priority = (priority + (Timer.currentQuantum / Timer.quantumMaxValue)) / 2;
+            Console.WriteLine("\n" + JobManager.GetCurrentJob().programName + " New priority: " + priority + "\n\n");
         }
 
         public void UpdateTimeSpent(int time)
@@ -79,14 +97,43 @@ namespace SO_T1
             CPU.UpdateCPUStatus(cpu_status); // altera o estado da cpu
             CPU.SetCPUDataMemory(dataMemory); // envia os dados para a cpu
             CPU.SetCPUProgramMemory(programMemory); // envia os dados para a cpu
+            Timer.RestartQuantum(); // reinicia o contador de quantum
+            calledCount++; // incrementa o numero de vezes que foi escalonado
 
             Console.WriteLine("\n\n-------- Continuing job: " + programName + "--------\n\n");
         }
 
+        private void FinishJob()
+        {
+            finishDate = Timer.currentTime;
+            jobStatus = finished;
+            JobManager.RemoveJob(this);
+        }
+
         public void UpdateJobStatus(int state)
         {
+            if (state == finished && jobStatus != finished) // remove o job finalizado da lista
+            {
+                FinishJob();
+            }
+            else
+            //if(jobStatus == blocked)
+            {
+                UpdateJobPriority(); // atualiza a prioridade do processo
+            }
+
+            if(state == ready && jobStatus == blocked) // estava bloqueado e nao estara mais
+            {
+                timeSpentBlocked += (Timer.currentTime - lastExecutionTime); // atualiza o tempo que passou bloqueado
+            }
+            else
+            if(state == blocked && jobStatus != blocked) // incrementa o contador de bloqueios
+            { 
+                blockCount++;
+                lastExecutionTime = Timer.currentTime;
+            }
+
             jobStatus = state;
-            if(jobStatus == finished) { JobManager.RemoveJob(this); Console.Write("Time Spent: " + timeSpent); } // remove o jog finalizado da lista
         }
     }
 }

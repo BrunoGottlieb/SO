@@ -9,7 +9,7 @@ namespace SO_T1
     {
         public int PC { get; set; } // registrador | o contador de programa
         public int A { get; set; } // registrador | acumulador
-        public int InterruptionCode { get; set; }// codigo de interrupcao // 0 normal | 1 instrucao ilegal | 2 violacao de memoria
+        public int InterruptionCode { get; set; } // codigo de interrupcao // 0 normal | 1 instrucao ilegal | 2 violacao de memoria
     }
 
     class CPU
@@ -154,7 +154,6 @@ namespace SO_T1
 
                 else if (instruction == "CARGX") // coloca no acumulador o valor na posição que está na posição n da memória de dados (A=M[M[n]])
                 {
-                    //int[] data = GetCPUDataMemory(cpu);
                     int pos = 0;
                     if (value < GetMemoryDataSize())
                     {
@@ -169,7 +168,6 @@ namespace SO_T1
 
                 else if (instruction == "ARMM") // coloca o valor do acumulador na posição n da memória de dados (M[n]=A)
                 {
-                    //int[] data = GetCPUDataMemory(cpu);
                     if (value < GetMemoryDataSize())
                     {
                         dataMemory[value] = GetCPU_A(status);
@@ -179,12 +177,10 @@ namespace SO_T1
                     {
                         status.InterruptionCode = violacao;
                     }
-                    //cpu.dataMemory[value] = cpu.status.A;
                 }
 
                 else if (instruction == "ARMX") // 	coloca o valor do acumulador posição que está na posição n da memória de dados (M[M[n]]=A)
                 {
-                    //int[] data = GetCPUDataMemory(cpu);
                     if (value < GetMemoryDataSize())
                     {
                         int pos = dataMemory[value];
@@ -195,7 +191,6 @@ namespace SO_T1
                     {
                         status.InterruptionCode = violacao;
                     }
-                    //cpu.dataMemory[cpu.dataMemory[value]] = cpu.status.A;
                 }
 
                 else if (instruction == "SOMA") // 	soma ao acumulador o valor no endereço n da memória de dados (A=A+M[n])

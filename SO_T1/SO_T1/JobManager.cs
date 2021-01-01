@@ -7,6 +7,9 @@ namespace SO_T1
     class JobManager // Escalonador
     {
         public static List<Job> jobs = new List<Job>();
+        public static List<Job> finishedJobs = new List<Job>();
+
+        private static Job currentJob; // job em execucao
 
         private static int cpuIdleTime = 0;
 
@@ -15,29 +18,40 @@ namespace SO_T1
             jobs = j;
         }
 
-        public static bool InitNextJobOnCPU() // inicilizar CPU com os dados de um job
+        public static void InitNextJobOnCPU() // inicilizar CPU com os dados de um job
         {
             if (jobs.Count == 0) // nao ha mais nenhum job na lista
             {
                 SO.FinishExecution();
             }
 
-            foreach (Job j in jobs)
+            float maxPriority = 0;
+            Job targetJob = null;
+
+            foreach (Job j in jobs) // percorre a lista de processos
             {
-                if (j.IsReady()) 
+                if (j.IsReady()) // caso o processo esteja pronto
                 {
-                    if (!j.isInitialized) { j.Init(); } // inicializa o job
-                    j.PutJobOnCPU(); // colocar os dados do job na CPU
-                    return true; // sucesso
+                    if(j.priority > maxPriority) // maior prioridade
+                    {
+                        maxPriority = j.priority; // atualiza a prioridade referencia
+                        targetJob = j; // seta o processo
+                    }
                 }
             }
 
-            return false;
+            if(targetJob != null)
+            {
+                if (!targetJob.isInitialized) { targetJob.Init(); } // inicializa o job
+                targetJob.PutJobOnCPU(); // colocar os dados do job na CPU
+                currentJob = targetJob; // atualiza o processo que esta em execucao atualmente
+            }
+            
         }
 
         public static Job GetCurrentJob()
         {
-            if (jobs.Count == 0) // nao ha mais nenhum job na lista
+            /*if (jobs.Count == 0) // nao ha mais nenhum job na lista
             {
                 SO.FinishExecution();
                 return null;
@@ -48,12 +62,16 @@ namespace SO_T1
                 if(j.IsReady()) { return j; }
             }
 
-            return null;
+            return null;*/
+
+            return currentJob;
+
         }
 
         public static void RemoveJob(Job j)
         {
-            jobs.Remove(j);
+            jobs.Remove(j); // remove da lista de processos ativos
+            finishedJobs.Add(j); // adiciona na lista de processos finalizados
         }
 
         public static void SetCurrentJobStatus(int state) // atualiza o estado do job atual

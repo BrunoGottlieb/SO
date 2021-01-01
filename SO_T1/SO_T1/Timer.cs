@@ -16,13 +16,42 @@ namespace SO_T1
     class Timer
     {
         private static List<Schedule> queue = new List<Schedule>();
-        //private Queue<Schedule> queue = new Queue<Schedule>();
 
-        public static int currentTime { get; set; }
+        public static int currentTime { get; set; } // contador de tempo
+
+        public static int currentQuantum { get; set; } // quantum do processo em execucao
+
+        public static int quantumMaxValue = 4; // valor de cada quantum
+
+        #region Quantum
+        public static void RestartQuantum()
+        {
+            currentQuantum = 0;
+            //Console.WriteLine("\nRestarting Quantum. Now: " + currentQuantum + "\n");
+        }
+
+        public static void UpdateQuantum()
+        {
+            currentQuantum++;
+            //Console.WriteLine("\nUpdating Quantum. Now: " + currentQuantum + "\n");
+            CheckQuantum();
+        }
+
+        private static void CheckQuantum()
+        {
+            if (currentQuantum >= quantumMaxValue && CPU.GetCPUInterruptionCode() != 3) // caso o tempo de quantum tenha atingido seu limite
+            {
+                Console.WriteLine("\n*** MAX QUANTUM ***\n");
+                SO.TimerCallBack(JobManager.GetCurrentJob(), 0); // gera uma interrupcao
+            }
+        }
+
+        #endregion
 
         public static void Initialize()
         {
             currentTime = 0;
+            currentQuantum = 0;
             queue.Clear();
         }
 
@@ -30,6 +59,7 @@ namespace SO_T1
         public static int UpdateTime()
         {
             currentTime++;
+            if (CPU.GetCPUInterruptionCode() == 0) { UpdateQuantum(); }// incrementa tambem o contador de quantum atual
             Console.WriteLine("Timer current time: " + currentTime);
             return GetInterruption(); // checa se ele esta causando alguma interrupcao
         }
@@ -55,7 +85,7 @@ namespace SO_T1
                 {
                     NewInterruption(schedule.job, 'P', schedule.period + currentTime, schedule.interruptionCode); // reinsere as periodicas
                 }
-                SO.TimerCallBack(schedule.job);
+                SO.TimerCallBack(schedule.job, 0);
                 return schedule.interruptionCode; // retorna o codigo da interrupcao
             }
         }
