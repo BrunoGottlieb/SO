@@ -85,6 +85,8 @@ namespace SO_T1
                 ViolationHandler(); // violacao de memoria
             }
 
+            if (instruction != "PARA") { CPU.UpdatePC(); }
+
             JobManager.InitNextJobOnCPU(); // inicilizar CPU com os dados de um job
 
         }
@@ -162,9 +164,12 @@ namespace SO_T1
 
             j.UpdateJobStatus(newStatus);
 
-            if(CPU.GetCPUInterruptionCode() != 0) { CPU.UpdatePC(); } // CPU normalizou, atualiza o valor de PC
+            //if(CPU.GetCPUInterruptionCode() != normal) { CPU.UpdatePC(); Console.WriteLine("Updating PC for " + JobManager.GetCurrentJob().programName); } // CPU normalizou, atualiza o valor de PC
 
             JobManager.InitNextJobOnCPU(); // chama outro processo para executar
+
+            //CPU.UpdatePC();
+
             return;
         }
 
@@ -187,7 +192,7 @@ namespace SO_T1
                 Console.WriteLine(" ");
                 Console.WriteLine("Start time: " + j.launchDate); // hora de início
                 Console.WriteLine("Finish time: " + j.finishDate); // hora de término
-                // Tempo de retorno
+                Console.WriteLine("Life time: " + (j.finishDate - j.launchDate)); // Tempo de retorno
                 Console.WriteLine("Time using CPU: " + j.timeSpent); // tempo de CPU
                 Console.WriteLine("CPU usage: " + (((float)j.timeSpent / (float)Timer.currentTime)*100).ToString("00.00") + "%"); // percentual de CPU utilizada durante sua vida
                 Console.WriteLine("Time spent blocked: " + j.timeSpentBlocked); // Tempo que passou bloqueado

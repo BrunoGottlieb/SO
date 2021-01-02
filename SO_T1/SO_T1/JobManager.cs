@@ -16,6 +16,11 @@ namespace SO_T1
             jobs = j;
         }
 
+        public static int JobsCount()
+        {
+            return jobs.Count;
+        }
+
         public static void InitNextJobOnCPU() // inicilizar CPU com os dados de um job
         {
             if (jobs.Count == 0) // nao ha mais nenhum job na lista
@@ -23,17 +28,18 @@ namespace SO_T1
                 SO.FinishExecution();
             }
 
-            float maxPriority = 0;
+            float maxPriority = 1;
             Job targetJob = null;
 
             foreach (Job j in jobs) // percorre a lista de processos
             {
                 if (j.IsReady()) // caso o processo esteja pronto
                 {
-                    if(j.priority > maxPriority) // maior prioridade
+                    if(j.priority < maxPriority) // maior prioridade
                     {
                         maxPriority = j.priority; // atualiza a prioridade referencia
                         targetJob = j; // seta o processo
+                        //Console.WriteLine("\n" + targetJob.programName + " has the greatest probability: " + targetJob.priority + "\n");
                     }
                 }
             }

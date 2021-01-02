@@ -33,7 +33,7 @@ namespace SO_T1
                 }
                 else if (interruptionCode == sleeping)
                 {
-                    // nothing
+                    Console.WriteLine("CPU is sleeping"); // nothing
                 }
 
                 // ficar chamando esse metodo enquanto houver interrupcao

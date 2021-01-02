@@ -18,6 +18,7 @@ namespace SO_T1
         public int read_delay; // tempo de acesso a cada dado de leitura
         public string output_path; // arquivos de saída(onde serão colocados os dados e tempo de gravação de cada dado);
         public int write_delay; // tempo de acesso a cada dado de escrita
+        public int quantum; // valor do quantum deste processo
 
         // Sistema
         public bool isInitialized = false;
@@ -67,13 +68,14 @@ namespace SO_T1
             cpu_status = new Status();
             dataMemory = new int[memory];
             isInitialized = true;
+            Timer.quantumMaxValue = quantum;
 
-            Console.WriteLine("\n\n-------- Initializing job: " + programName + " at time: " + launchDate + " --------\n\n");
+            Console.WriteLine("\n\n-------- Initializing job: " + programName + " --------\n\n");
         }
 
-        private void UpdateJobPriority()
+        public void UpdateJobPriority()
         {
-            priority = (priority + (Timer.currentQuantum / Timer.quantumMaxValue)) / 2;
+            priority = (priority + (Timer.currentQuantum / quantum)) / 2;
             Console.WriteLine("\n" + JobManager.GetCurrentJob().programName + " New priority: " + priority + "\n\n");
         }
 
@@ -97,10 +99,11 @@ namespace SO_T1
             CPU.UpdateCPUStatus(cpu_status); // altera o estado da cpu
             CPU.SetCPUDataMemory(dataMemory); // envia os dados para a cpu
             CPU.SetCPUProgramMemory(programMemory); // envia os dados para a cpu
+            Timer.quantumMaxValue = quantum;
             Timer.RestartQuantum(); // reinicia o contador de quantum
             calledCount++; // incrementa o numero de vezes que foi escalonado
 
-            Console.WriteLine("\n\n-------- Continuing job: " + programName + "--------\n\n");
+            Console.WriteLine("\n\n-------- Continuing job: " + programName + " --------\n\n");
         }
 
         private void FinishJob()
@@ -116,11 +119,6 @@ namespace SO_T1
             {
                 FinishJob();
             }
-            else
-            //if(jobStatus == blocked)
-            {
-                UpdateJobPriority(); // atualiza a prioridade do processo
-            }
 
             if(state == ready && jobStatus == blocked) // estava bloqueado e nao estara mais
             {
@@ -131,6 +129,7 @@ namespace SO_T1
             { 
                 blockCount++;
                 lastExecutionTime = Timer.currentTime;
+                UpdateJobPriority(); // atualiza a prioridade do processo
             }
 
             jobStatus = state;

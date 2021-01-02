@@ -17,6 +17,7 @@ namespace SO_T1
             job1.read_delay = 5;
             job1.write_delay = 30;
             job1.memory = 100; // quantidade de memoria necessaria;
+            job1.quantum = 20;
 
             Job job2 = new Job();
             job2.programName = "Programa 2";
@@ -25,6 +26,7 @@ namespace SO_T1
             job2.read_delay = 15;
             job2.write_delay = 25;
             job2.memory = 100;
+            job2.quantum = 20;
 
             Job job3 = new Job();
             job3.programName = "Programa 3"; // opcional, qualquer valor
@@ -33,6 +35,7 @@ namespace SO_T1
             job3.read_delay = 10;
             job3.write_delay = 10;
             job3.memory = 100; // quantidade de memoria necessaria;
+            job3.quantum = 20;
 
             List<Job> jobs = new List<Job>();
             jobs.Add(job1);

@@ -21,7 +21,7 @@ namespace SO_T1
 
         public static int currentQuantum { get; set; } // quantum do processo em execucao
 
-        public static int quantumMaxValue = 4; // valor de cada quantum
+        public static int quantumMaxValue { get; set; } // valor de cada quantum
 
         #region Quantum
         public static void RestartQuantum()
@@ -40,7 +40,9 @@ namespace SO_T1
             if (currentQuantum >= quantumMaxValue && CPU.GetCPUInterruptionCode() != 3) // caso o tempo de quantum tenha atingido seu limite
             {
                 Console.WriteLine("\n*** MAX QUANTUM ***\n");
-                SO.TimerCallBack(JobManager.GetCurrentJob(), 0); // gera uma interrupcao
+                Job currentJob = JobManager.GetCurrentJob();
+                currentJob.UpdateJobPriority(); // atualiza a prioridade pois o quantum acabou
+                SO.TimerCallBack(currentJob, 0); // gera uma interrupcao
             }
         }
 
@@ -72,6 +74,12 @@ namespace SO_T1
         // Essa função pode ser chamada diversas vezes, para se saber se tem várias interrupções no mesmo tempo – o timer “esquece” cada interrupção que ele retorna
         public static int GetInterruption()
         {
+            /*Console.WriteLine("Imprimindo listinha");
+            for (int i = 0; i < queue.Count; i++)
+            {
+                Console.WriteLine("Data: " + queue[i].date);
+            }*/
+
             if(queue.Count == 0) { return 0; } // nao ha interrupcoes
             if(currentTime < queue[0].date) { return 0; } // ainda nao chegou a interrupcao
             else
@@ -98,17 +106,17 @@ namespace SO_T1
             newSchedule.date = currentTime + date;
             newSchedule.interruptionCode = interruptionCode;
 
-            Console.WriteLine("\nCreating new interruption for time: " + newSchedule.date);
+            Console.WriteLine("\nCreating new interruption for time: " + newSchedule.date + "\n");
 
             int index = 0;
             if (queue.Count > 0)
             {
-                while (index < queue.Count && queue[index].date < date)
+                while (index < queue.Count && newSchedule.date > queue[index].date)
                 {
                     index++;
                 }
             }
-            
+
             queue.Insert(index, newSchedule); // insere ordenado
         }
 
