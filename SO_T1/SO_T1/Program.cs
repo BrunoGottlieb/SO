@@ -11,31 +11,31 @@ namespace SO_T1
             CPU cpu = new CPU(); // instancia da CPU
 
             Job job1 = new Job();
-            job1.programName = "Programa 1"; // opcional, qualquer valor
-            job1.input_path = "C://teste/SS.txt";
+            job1.programName = "LimitadoCPU"; // opcional, qualquer valor
+            job1.input_path = "C://teste/LimitadoCPU.txt";
             job1.output_path = "C://teste/ES/";
-            job1.read_delay = 5;
-            job1.write_delay = 30;
+            job1.read_delay = 10;
+            job1.write_delay = 10;
             job1.memory = 100; // quantidade de memoria necessaria;
-            job1.quantum = 20;
+            job1.quantum = 30;
 
             Job job2 = new Job();
-            job2.programName = "Programa 2";
-            job2.input_path = "C://teste/SO.txt";
+            job2.programName = "LimitadoES";
+            job2.input_path = "C://teste/LimitadoES.txt";
             job2.output_path = "C://teste/ES/";
-            job2.read_delay = 15;
-            job2.write_delay = 25;
+            job2.read_delay = 10;
+            job2.write_delay = 10;
             job2.memory = 100;
-            job2.quantum = 20;
+            job2.quantum = 30;
 
             Job job3 = new Job();
-            job3.programName = "Programa 3"; // opcional, qualquer valor
-            job3.input_path = "C://teste/SS.txt";
+            job3.programName = "Mistura"; // opcional, qualquer valor
+            job3.input_path = "C://teste/Mistura.txt";
             job3.output_path = "C://teste/ES/";
             job3.read_delay = 10;
             job3.write_delay = 10;
             job3.memory = 100; // quantidade de memoria necessaria;
-            job3.quantum = 20;
+            job3.quantum = 30;
 
             List<Job> jobs = new List<Job>();
             jobs.Add(job1);

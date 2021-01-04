@@ -108,6 +108,11 @@ namespace SO_T1
 
             // realiza a operação 
             string fullPath = path + CPU.value.ToString() + ".txt";
+            if (File.Exists(fullPath) == false)
+            {
+                Console.WriteLine("Error: " + fullPath + " does not exist");
+                Environment.Exit(0);
+            }
             string content = File.ReadAllText(fullPath);
             CPU.SetCPU_A(Int32.Parse(content)); // atualiza o acumulador com o valor do input
 
@@ -128,8 +133,13 @@ namespace SO_T1
             
             s.InterruptionCode = sleeping; // coloca a CPU em estado dormindo
 
-            string fullPath = path + CPU.value.ToString() + ".txt"; // realiza a operação 
-            File.WriteAllText(fullPath, s.A.ToString());
+            string fullPath = path + CPU.value.ToString() + ".txt";
+            if(File.Exists(fullPath) == false)
+            {
+                Console.WriteLine("Error: " + fullPath + " does not exist");
+                Environment.Exit(0);
+            }
+            File.WriteAllText(fullPath, s.A.ToString()); // realiza a operação 
 
             Job j = JobManager.GetCurrentJob();
             j.UpdateJobCPUStatus(s); // salva o estado da CPU no job
