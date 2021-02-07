@@ -90,7 +90,7 @@ namespace SO_T2
         {
             cpu_status = e;
             programMemory = CPU.programMemory;
-            dataMemory = CPU.dataMemory;
+            dataMemory = CPU.GetCPUDataMemory();
         }
 
         public void PutJobOnCPU() // colocar os dados do job na CPU

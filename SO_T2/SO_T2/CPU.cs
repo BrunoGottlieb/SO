@@ -19,10 +19,12 @@ namespace SO_T2
         public const int violacao = 2;
         public const int sleeping = 3;
 
+        private const int mmu_ilegal = -1;
+        private const int mmu_violacao = -2;
+
         public static Status status = new Status(); // estado da CPU
 
         public static string[] programMemory; // memoria de programa
-        public static int[] dataMemory; // memoria de dados
 
         #region API
 
@@ -48,13 +50,13 @@ namespace SO_T2
         // alterar o conteúdo da memória de dados (recebe um vetor de inteiros, que é alterado pela execução das instruções)
         public static void SetCPUDataMemory(int[] newData)
         {
-            dataMemory = newData;
+            MMU.SetDataMemory(newData);
         }
 
         // obter o conteúdo da memória de dados (retorna um vetor de inteiros que é o conteúdo atual da memória – não precisa desta função caso o vetor passado pela função acima seja alterado “in loco”)
         public static int[] GetCPUDataMemory()
         {
-            return dataMemory;
+            return MMU.GetDataMemory();
         }
 
         // ler o modo de interrupção da CPU (normal ou um motivo de interrupção)
@@ -97,7 +99,7 @@ namespace SO_T2
 
         public static int GetMemoryDataSize()
         {
-            return dataMemory.Length;
+            return MMU.GetTotalMemorySize();
         }
 
         public static void UpdatePC()
@@ -155,25 +157,21 @@ namespace SO_T2
                 else if (instruction == "CARGX") // coloca no acumulador o valor na posição que está na posição n da memória de dados (A=M[M[n]])
                 {
                     int pos = 0;
-                    if (value < GetMemoryDataSize())
+                    pos = MMU.GetDataMemoryByIndex(value);
+                    if(pos == mmu_violacao)
                     {
-                        pos = dataMemory[value];
-                        status.A = pos;
+                        status.InterruptionCode = violacao;
                     }
                     else
                     {
-                        status.InterruptionCode = violacao;
+                        status.A = pos;
                     }
                 }
 
                 else if (instruction == "ARMM") // coloca o valor do acumulador na posição n da memória de dados (M[n]=A)
                 {
-                    if (value < GetMemoryDataSize())
-                    {
-                        dataMemory[value] = GetCPU_A(status);
-                        SetCPUDataMemory(dataMemory);
-                    }
-                    else
+                    int check = MMU.SetDataMemoryAtIndex(GetCPU_A(status), value);
+                    if(check == mmu_violacao)
                     {
                         status.InterruptionCode = violacao;
                     }
@@ -181,13 +179,9 @@ namespace SO_T2
 
                 else if (instruction == "ARMX") // 	coloca o valor do acumulador posição que está na posição n da memória de dados (M[M[n]]=A)
                 {
-                    if (value < GetMemoryDataSize())
-                    {
-                        int pos = dataMemory[value];
-                        dataMemory[pos] = GetCPU_A(status);
-                        SetCPUDataMemory(dataMemory);
-                    }
-                    else
+                    int pos = MMU.GetDataMemoryByIndex(value);
+                    int check = MMU.SetDataMemoryAtIndex(GetCPU_A(status), pos);
+                    if(check == mmu_violacao)
                     {
                         status.InterruptionCode = violacao;
                     }
@@ -195,13 +189,15 @@ namespace SO_T2
 
                 else if (instruction == "SOMA") // 	soma ao acumulador o valor no endereço n da memória de dados (A=A+M[n])
                 {
-                    if (value < GetMemoryDataSize())
+                    value = MMU.GetDataMemoryByIndex(value);
+
+                    if(value == mmu_violacao)
                     {
-                        status.A = status.A + dataMemory[value];
+                        status.InterruptionCode = violacao;
                     }
                     else
                     {
-                        status.InterruptionCode = violacao;
+                        status.A = status.A + value;
                     }
                 }
 
