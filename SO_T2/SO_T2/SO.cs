@@ -9,6 +9,8 @@ namespace SO_T2
     {
         static string path = "C://teste/ES/"; // diretorio
 
+        public static string[] programMemory; // memoria de programa
+
         // Constantes da CPU
         private const int normal = 0;
         private const int ilegal = 1;
@@ -32,6 +34,8 @@ namespace SO_T2
         public static int jobChangeCount = 0;
         private static int changesByQuantumCount = 0;
 
+        Queue<Page> pagesFIFO = new Queue<Page>();
+
         public static void Initialize()
         {
             CPU.InitializeCPU();
@@ -39,6 +43,8 @@ namespace SO_T2
             JobManager.InitNextJobOnCPU(); // inicializa o Job na CPU
 
             InterruptionManager interruptionManager = new InterruptionManager();
+
+            Memory.Init();
 
             /// Timer.NewInterruption(JobManager.GetCurrentJob(), 'P', 50, ilegal); // interrupcao periodica do SO
 
@@ -181,6 +187,50 @@ namespace SO_T2
             //CPU.UpdatePC();
 
             return;
+        }
+
+        private static void InitPage(int index)
+        {
+            int frame = index / Memory.pageSize; // numero do quadro para onde vai o dado
+            Console.WriteLine("frame: " + frame);
+
+            Job currentJob = JobManager.GetCurrentJob(); // processo atual
+
+            int physicalFrame = MMU.GetNextFreeFrame(); // descobre qual eh o proximo quadro livre da memoria fisica
+            Console.WriteLine("physicalFrame: " + physicalFrame);
+
+            if (physicalFrame >= 0) // ha quadro disponivel
+            {
+                Console.WriteLine("Ha quadro disponivel na memoria fisica. Quadro: " + physicalFrame);
+                MMU.SetMemoryFrameValidity(physicalFrame, true); // mapeia a pagina na memoria fisica
+
+                currentJob.pagesTable[frame].frameNum = physicalFrame; // posicao dessa pagina na memoria fisica
+                Console.WriteLine("frameNum: " + currentJob.pagesTable[frame].frameNum);
+
+                currentJob.pagesTable[frame].isValid = true; // marca a pagina como valida
+
+                SetMMUPagesTable(); // envia a tabela de paginas do processo para a MMU
+            }
+            else
+            {
+                // FIFO
+            }
+        }
+
+        // envia a tabela de paginas do processo para a MMU
+        private static void SetMMUPagesTable()
+        {
+            Job currentJob = JobManager.GetCurrentJob(); // processo atual
+            MMU.pagesTable = currentJob.pagesTable;
+        }
+
+        public static void PageFaultHandler()
+        {
+            Console.WriteLine("\nSO Page Fault Handler");
+            Console.WriteLine("CPU Value: " + CPU.value);
+            InitPage(CPU.value); // inicializa uma nova pagina
+            Status s = CPU.GetCPUStatus(); // salva o estado da CPU
+            s.InterruptionCode = normal; // coloca a CPU em estado dormindo
         }
 
         public static void FinishExecution()

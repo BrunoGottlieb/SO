@@ -10,6 +10,7 @@ namespace SO_T2
         private const int ilegal = 1;
         private const int violacao = 2;
         private const int sleeping = 3;
+        public const int pageFault = 4;
 
         public void Execute()
         {
@@ -30,6 +31,10 @@ namespace SO_T2
                 else if (interruptionCode == violacao)
                 {
                     SO.ViolationHandler();
+                }
+                else if (interruptionCode == pageFault)
+                {
+                    SO.PageFaultHandler();
                 }
                 else if (interruptionCode == sleeping)
                 {

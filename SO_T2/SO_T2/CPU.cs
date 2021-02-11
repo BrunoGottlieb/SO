@@ -18,13 +18,9 @@ namespace SO_T2
         public const int ilegal = 1;
         public const int violacao = 2;
         public const int sleeping = 3;
-
-        private const int mmu_ilegal = -1;
-        private const int mmu_violacao = -2;
+        public const int pageFault = 4;
 
         public static Status status = new Status(); // estado da CPU
-
-        public static string[] programMemory; // memoria de programa
 
         #region API
 
@@ -44,20 +40,20 @@ namespace SO_T2
         // alterar o conteúdo da memória de programa (recebe um vetor de strings)
         public static void SetCPUProgramMemory(string[] newData)
         {
-            programMemory = newData;
+            SO.programMemory = newData;
         }
 
         // alterar o conteúdo da memória de dados (recebe um vetor de inteiros, que é alterado pela execução das instruções)
-        public static void SetCPUDataMemory(int[] newData)
+        /*public static void SetCPUDataMemory(int[] newData)
         {
             MMU.SetDataMemory(newData);
         }
-
+        */
         // obter o conteúdo da memória de dados (retorna um vetor de inteiros que é o conteúdo atual da memória – não precisa desta função caso o vetor passado pela função acima seja alterado “in loco”)
-        public static int[] GetCPUDataMemory()
+        /*public static int[] GetCPUDataMemory()
         {
             return MMU.GetDataMemory();
-        }
+        }*/
 
         // ler o modo de interrupção da CPU (normal ou um motivo de interrupção)
         public static int GetCPUInterruptionCode()
@@ -74,7 +70,7 @@ namespace SO_T2
         // obter a instrução em PC (que pode ser inválida se PC estiver fora da memória de programa)
         public static string GetPCInstruction()
         {
-            return programMemory[status.PC];
+            return SO.programMemory[status.PC];
         }
 
         // obter o estado interno da CPU (retorna o valor de todos os registradores)
@@ -125,7 +121,6 @@ namespace SO_T2
 
                 string valueTmp = origem.Remove(0, origem.IndexOf(' ') + 1);
 
-
                 string valueString = string.Join("", valueTmp.ToCharArray().Where(Char.IsDigit));
 
                 if (valueString.Length > 0)
@@ -143,60 +138,76 @@ namespace SO_T2
 
                 else if (instruction == "CARGM") // coloca no acumulador o valor na posição n da memória de dados (A=M[n])
                 {
-                    int[] data = GetCPUDataMemory();
-                    if (value < GetMemoryDataSize())
+                    if (MMU.CheckViolation(value) || MMU.CheckPageFault(value))
                     {
-                        status.A = data[value];
+                        status.InterruptionCode = violacao;
                     }
                     else
                     {
-                        status.InterruptionCode = violacao;
+                        int returnedValue = MMU.GetDataMemoryByIndex(value);
+                        status.A = returnedValue;
                     }
                 }
 
                 else if (instruction == "CARGX") // coloca no acumulador o valor na posição que está na posição n da memória de dados (A=M[M[n]])
                 {
-                    int pos = 0;
-                    pos = MMU.GetDataMemoryByIndex(value);
-                    if(pos == mmu_violacao)
+                    if (MMU.CheckViolation(value) || MMU.CheckPageFault(value))
                     {
                         status.InterruptionCode = violacao;
                     }
                     else
                     {
-                        status.A = pos;
+                        int pos = 0;
+                        pos = MMU.GetDataMemoryByIndex(value);
+
+                        if (MMU.CheckViolation(pos) || MMU.CheckPageFault(pos))
+                        {
+                            status.InterruptionCode = violacao;
+                        }
+                        else
+                        {
+                            status.A = pos;
+                        }
                     }
                 }
 
                 else if (instruction == "ARMM") // coloca o valor do acumulador na posição n da memória de dados (M[n]=A)
                 {
-                    int check = MMU.SetDataMemoryAtIndex(GetCPU_A(status), value);
-                    if(check == mmu_violacao)
+                    if(MMU.CheckViolation(value)) { status.InterruptionCode = violacao; }
+                    else if(MMU.CheckPageFault(value)) { status.InterruptionCode = pageFault; }
+                    else
                     {
-                        status.InterruptionCode = violacao;
+                        MMU.SetDataMemoryAtIndex(GetCPU_A(status), value);
                     }
                 }
 
                 else if (instruction == "ARMX") // 	coloca o valor do acumulador posição que está na posição n da memória de dados (M[M[n]]=A)
                 {
-                    int pos = MMU.GetDataMemoryByIndex(value);
-                    int check = MMU.SetDataMemoryAtIndex(GetCPU_A(status), pos);
-                    if(check == mmu_violacao)
+                    if (MMU.CheckViolation(value) || MMU.CheckPageFault(value))
                     {
                         status.InterruptionCode = violacao;
+                    } 
+                    else
+                    {
+                        int pos = MMU.GetDataMemoryByIndex(value);
+                        if (MMU.CheckViolation(value)) { status.InterruptionCode = violacao; }
+                        else if (MMU.CheckPageFault(value)) { status.InterruptionCode = pageFault; }
+                        else
+                        {
+                            MMU.SetDataMemoryAtIndex(GetCPU_A(status), pos);
+                        }
                     }
                 }
 
                 else if (instruction == "SOMA") // 	soma ao acumulador o valor no endereço n da memória de dados (A=A+M[n])
                 {
-                    value = MMU.GetDataMemoryByIndex(value);
-
-                    if(value == mmu_violacao)
+                    if (MMU.CheckViolation(value) || MMU.CheckPageFault(value))
                     {
                         status.InterruptionCode = violacao;
                     }
                     else
                     {
+                        value = MMU.GetDataMemoryByIndex(value);
                         status.A = status.A + value;
                     }
                 }

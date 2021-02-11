@@ -7,6 +7,8 @@ namespace SO_T2
 {
     class Job
     {
+        public Page[] pagesTable = new Page[10]; // tabela de páginas
+
         private const int ready = 0;
         private const int blocked = 1;
         private const int finished = 2;
@@ -36,7 +38,6 @@ namespace SO_T2
         // CPU
         public Status cpu_status; // status da cpu
         public string[] programMemory; // memoria de programa
-        public int[] dataMemory; // memoria de dados
 
         public bool IsReady()
         {
@@ -45,6 +46,8 @@ namespace SO_T2
 
         public void Init()
         {
+            InitPageTable();
+
             if (File.Exists(input_path)) // confere se o diretorio existe e le o seu conteudo
             {
                 string content = File.ReadAllText(input_path);
@@ -66,11 +69,18 @@ namespace SO_T2
             launchDate = Timer.GetCurrentTime();
             priority = 0.5f;
             cpu_status = new Status();
-            dataMemory = new int[memory];
             isInitialized = true;
             Timer.quantumMaxValue = quantum;
 
             Console.WriteLine("\n\n-------- Initializing job: " + programName + " --------\n\n");
+        }
+
+        private void InitPageTable()
+        {
+            for(int i = 0; i < pagesTable.Length; i++)
+            {
+                pagesTable[i] = new Page();
+            }
         }
 
         public void UpdateJobPriority()
@@ -89,19 +99,21 @@ namespace SO_T2
 
         {
             cpu_status = e;
-            programMemory = CPU.programMemory;
-            dataMemory = CPU.GetCPUDataMemory();
+            programMemory = SO.programMemory;
+            //dataMemory = CPU.GetCPUDataMemory();
         }
 
         public void PutJobOnCPU() // colocar os dados do job na CPU
         {
             cpu_status.InterruptionCode = 0; // set to normal again
             CPU.UpdateCPUStatus(cpu_status); // altera o estado da cpu
-            CPU.SetCPUDataMemory(dataMemory); // envia os dados para a cpu
+            //CPU.SetCPUDataMemory(dataMemory); // envia os dados para a cpu
             CPU.SetCPUProgramMemory(programMemory); // envia os dados para a cpu
             Timer.quantumMaxValue = quantum;
             Timer.RestartQuantum(); // reinicia o contador de quantum
             calledCount++; // incrementa o numero de vezes que foi escalonado
+
+            MMU.pagesTable = pagesTable; // passa a tabela de paginas desse processo para a MMU
 
             Console.WriteLine("\n\n-------- Continuing job: " + programName + " --------\n\n");
         }
