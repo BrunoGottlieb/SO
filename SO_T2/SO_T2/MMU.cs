@@ -11,7 +11,7 @@ namespace SO_T2
         /// alterações que a MMU pode fazer na tabela de páginas.
 
         ///  O número de entradas nesse vetor deve corresponder ao tamanho máximo de um espaço de endereçamento virtual
-        public static Page[] pagesTable = new Page[10]; // tabela de páginas
+        public static PageInfo[] pagesTable = new PageInfo[Memory.pageQtd]; // tabela de páginas
 
         // obter o tamanho total da memória 
         public static int GetTotalMemorySize()
@@ -29,24 +29,13 @@ namespace SO_T2
         {
             for(int i = 0; i < Memory.dataMemory.Length; i++)
             {
-                if(Memory.dataMemory[i].isValid == false)
+                if(Memory.dataMemory[i].isAvaliable == true)
                 {
                     return i; // retorna o quadro livre
                 }
             }
 
             return -1; // Nao ha quadros livres
-        }
-
-        // converte endereco virtual para endereco fisico
-        private static void AddressConveter(int newData, int index) 
-        {
-            int frame = index / Memory.pageSize; // numero do quadro para onde vai o dado
-            int offset = index - (frame * Memory.pageSize); // deslocamento dentro do quadro
-
-            Page pagina = pagesTable[frame]; // pagina do processo para onde vai o dado
-            pagina.content[offset] = newData; // poe o novo conteudo na memoria da pagina correspondente
-            Memory.dataMemory[pagina.frameNum] = pagina; // atualiza a memoria fisica
         }
 
         public static bool CheckPageFault(int index)
@@ -78,9 +67,15 @@ namespace SO_T2
         {
             Console.WriteLine("\n\nSetDataMemoryAtIndex: " + index + "\n\n");
 
-            AddressConveter(newData, index); // converte endereco virtual para endereco fisico | retorna sucesso ou falha
+            int frame = index / Memory.pageSize; // numero do quadro para onde vai o dado
+            int offset = index - (frame * Memory.pageSize); // deslocamento dentro do quadro
 
-            //return Memory.dataMemory[index] = newData;
+            PageInfo paginaDescritor = pagesTable[frame]; // pagina do processo para onde vai o dado
+            paginaDescritor.wasAccessed = true;
+            paginaDescritor.wasChanged = true;
+            paginaDescritor.isValid = true;
+            Page page = Memory.dataMemory[paginaDescritor.frameNum]; // frame na memoria fisica, o descritor contem essa info ja do SO
+            page.content[offset] = newData; // deslocamento dentro da pagina | recebe novo dado
         }
 
         // ler um inteiro de uma posição de memória
@@ -91,8 +86,10 @@ namespace SO_T2
             int frame = index / Memory.pageSize; // numero do quadro para onde vai o dado
             int offset = index - (frame * Memory.pageSize); // deslocamento dentro do quadro
 
-            Page pagina = pagesTable[frame]; // pagina do processo para onde vai o dado
-            return pagina.content[offset]; // poe o novo conteudo na memoria da pagina correspondente
+            PageInfo paginaDescritor = pagesTable[frame]; // pagina do processo para onde vai o dado na tabela de paginas
+            Page pagina = Memory.dataMemory[paginaDescritor.frameNum]; // pagina do processo para onde vai o dado na memoria principal
+            paginaDescritor.wasAccessed = true;
+            return pagina.content[offset]; // retorna o dado da memoria na posicao correspondente
         }
 
         /*public static void SetDataMemory(int[] newData)
@@ -113,9 +110,7 @@ namespace SO_T2
 
         public static void SetMemoryFrameValidity(int index, bool state) // altera a validade de um quadro da memoria fisica
         {
-            Memory.dataMemory[index].isValid = state;
-            Console.WriteLine("Validou o quadro " + index);
-            Console.WriteLine("IS VALID " + Memory.dataMemory[index].isValid);
+            Memory.dataMemory[index].isAvaliable = state;
         }
 
         /// A MMU deve ter ainda uma forma de permitir ao SO informar qual tabela de páginas deve ser usada

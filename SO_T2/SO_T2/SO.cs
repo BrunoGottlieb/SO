@@ -11,6 +11,8 @@ namespace SO_T2
 
         public static string[] programMemory; // memoria de programa
 
+        public static Page[] secondaryMemory;
+
         // Constantes da CPU
         private const int normal = 0;
         private const int ilegal = 1;
@@ -34,7 +36,7 @@ namespace SO_T2
         public static int jobChangeCount = 0;
         private static int changesByQuantumCount = 0;
 
-        Queue<Page> pagesFIFO = new Queue<Page>();
+        public static Queue<PageInfo> pagesFIFO = new Queue<PageInfo>();
 
         public static void Initialize()
         {
@@ -45,6 +47,8 @@ namespace SO_T2
             InterruptionManager interruptionManager = new InterruptionManager();
 
             Memory.Init();
+
+            secondaryMemory = new Page[1000]; // aloca a memoria secundaria
 
             /// Timer.NewInterruption(JobManager.GetCurrentJob(), 'P', 50, ilegal); // interrupcao periodica do SO
 
@@ -61,8 +65,6 @@ namespace SO_T2
             Job b = JobManager.GetCurrentJob();
             b.UpdateTimeSpent(Timer.GetCurrentTime() - lastExecutionTime); // atualiza o tempo de execucao do job
             lastExecutionTime = Timer.GetCurrentTime(); // atualiza o tempo que o SO foi chamado pela ultima vez
-
-            Status status = CPU.GetCPUStatus();
 
             string origem = CPU.GetPCInstruction(); // retorna a instrucao atual do PC
 
@@ -189,7 +191,7 @@ namespace SO_T2
             return;
         }
 
-        private static void InitPage(int index)
+        private static void InitPage(int index) // inicializa uma nova pagina apos page default
         {
             int frame = index / Memory.pageSize; // numero do quadro para onde vai o dado
             Console.WriteLine("frame: " + frame);
@@ -202,18 +204,28 @@ namespace SO_T2
             if (physicalFrame >= 0) // ha quadro disponivel
             {
                 Console.WriteLine("Ha quadro disponivel na memoria fisica. Quadro: " + physicalFrame);
-                MMU.SetMemoryFrameValidity(physicalFrame, true); // mapeia a pagina na memoria fisica
+                MMU.SetMemoryFrameValidity(physicalFrame, false); // mapeia a pagina na memoria fisica
 
                 currentJob.pagesTable[frame].frameNum = physicalFrame; // posicao dessa pagina na memoria fisica
                 Console.WriteLine("frameNum: " + currentJob.pagesTable[frame].frameNum);
 
                 currentJob.pagesTable[frame].isValid = true; // marca a pagina como valida
 
+                pagesFIFO.Enqueue(currentJob.pagesTable[frame]);
+                Console.WriteLine("\n\nFIFO: ###########################################################################");
+                foreach(PageInfo pageInfo in pagesFIFO)
+                {
+                    Console.WriteLine(pageInfo.frameNum);
+                }
+
                 SetMMUPagesTable(); // envia a tabela de paginas do processo para a MMU
             }
             else
             {
                 // FIFO
+
+                Console.WriteLine("FIFO");
+                Environment.Exit(0);
             }
         }
 

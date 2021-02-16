@@ -129,6 +129,7 @@ namespace SO_T2
                 // DEBUG
                 {
                     Console.WriteLine("\ninstruction: " + instruction + " " + value);
+                    Console.WriteLine("\nPC: " + status.PC +"| \n\n");
                 }
 
                 if (instruction == "CARGI") // coloca o valor n no acumulador (A=n)

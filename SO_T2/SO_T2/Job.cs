@@ -7,7 +7,7 @@ namespace SO_T2
 {
     class Job
     {
-        public Page[] pagesTable = new Page[10]; // tabela de páginas
+        public PageInfo[] pagesTable = new PageInfo[Memory.pageQtd]; // tabela de páginas
 
         private const int ready = 0;
         private const int blocked = 1;
@@ -79,7 +79,7 @@ namespace SO_T2
         {
             for(int i = 0; i < pagesTable.Length; i++)
             {
-                pagesTable[i] = new Page();
+                pagesTable[i] = new PageInfo();
             }
         }
 

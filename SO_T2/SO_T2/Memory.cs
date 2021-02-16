@@ -6,14 +6,17 @@ namespace SO_T2
 {
     class Memory
     {
-        public static Page[] dataMemory = new Page[10]; // memoria fisica
+        public static Page[] dataMemory; // memoria fisica
         public static int totalMemorySize = 100; // tamanho total da memoria
         public static int pageSize = 10; // tamanho da pagina
         public static int frameSize = pageSize; // tamanho do quadro
 
+        public static int pageQtd = totalMemorySize / pageSize;
+
         public static void Init()
         {
-            for(int i = 0; i < dataMemory.Length; i++)
+            dataMemory = new Page[pageQtd];
+            for (int i = 0; i < dataMemory.Length; i++)
             {
                 dataMemory[i] = new Page();
             }
