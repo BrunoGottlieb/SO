@@ -108,6 +108,16 @@ namespace SO_T2
 
         }
 
+        public static void CleanJobFromMemory(Job job)
+        {
+            for(int i = 0; i < job.pagesTable.Length; i++)
+            {
+                int frame = job.pagesTable[i].frameNum;
+                if(frame != null && frame >= 0)
+                    Memory.dataMemory[frame].Clean();
+            }
+        }
+
         public static void SetMemoryFrameValidity(int index, bool state) // altera a validade de um quadro da memoria fisica
         {
             Memory.dataMemory[index].isAvaliable = state;

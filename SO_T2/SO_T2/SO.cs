@@ -85,6 +85,7 @@ namespace SO_T2
             if (instruction == "PARA")
             {
                 Console.WriteLine("\nIlegal ended\n");
+                MMU.CleanJobFromMemory(JobManager.GetCurrentJob());
                 JobManager.SetCurrentJobStatus(finished); // esse programa terminou de ser executado
             }
             else

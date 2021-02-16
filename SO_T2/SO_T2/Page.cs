@@ -14,5 +14,11 @@ namespace SO_T2
             content = new int[Memory.pageSize];
             isAvaliable = true;
         }
+
+        public void Clean()
+        {
+            Array.Clear(content, 0, content.Length);
+            isAvaliable = true;
+        }
     }
 }
