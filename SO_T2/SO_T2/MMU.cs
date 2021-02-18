@@ -125,13 +125,21 @@ namespace SO_T2
 
         }
 
-        public static void CleanJobFromMemory(Job job)
+        public static void CleanJobFromMemory(Job job) // retira os dados do processo finalizado da memoria
         {
+            Console.WriteLine("Cleaning job: " + job.programName);
             for(int i = 0; i < job.pagesTable.Length; i++)
             {
-                int frame = job.pagesTable[i].frameNum;
-                if(frame != null && frame >= 0)
-                    Memory.dataMemory[frame].Clean();
+                if(job.pagesTable[i].isValid)
+                {
+                    if(job.pagesTable[i].isAtSecondary) // retira os dados da memoria secundaria
+                    {
+                        SO.secondaryMemory[job.pagesTable[i].posAtSecondary] = new Page();
+                    }
+                    int frame = job.pagesTable[i].frameNum;
+                    if (frame != null && frame >= 0) // retira os dados da memoria primaria
+                        Memory.dataMemory[frame].Clean();
+                }
             }
         }
 

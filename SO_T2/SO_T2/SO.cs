@@ -11,7 +11,7 @@ namespace SO_T2
 
         public static string[] programMemory; // memoria de programa
 
-        public static List<Page> secondaryMemory;
+        public static Page[] secondaryMemory;
 
         // Constantes da CPU
         private const int normal = 0;
@@ -48,7 +48,7 @@ namespace SO_T2
 
             Memory.Init();
 
-            secondaryMemory = new List<Page>();
+            secondaryMemory = new Page[100];
 
             /// Timer.NewInterruption(JobManager.GetCurrentJob(), 'P', 50, ilegal); // interrupcao periodica do SO
 
@@ -223,7 +223,7 @@ namespace SO_T2
                     }
 
                     Memory.dataMemory[physicalFrame] = secondaryMemory[pos]; // retira da memoria secundaria e passa para a primaria
-                    secondaryMemory.RemoveAt(pos); // remove da memoria secundaria
+                    secondaryMemory[pos] = new Page(); // remove da memoria secundaria
                 }
 
                 currentJob.pagesTable[frame].frameNum = physicalFrame; // posicao dessa pagina na memoria fisica
@@ -259,16 +259,29 @@ namespace SO_T2
         private static void AddToSecondaryMemory(PageInfo pageInfo)
         {
             Page targetPage = Memory.dataMemory[pageInfo.frameNum]; // pagina que sera retirada da memoria principal
-            secondaryMemory.Add(targetPage); // adiciona essa pagina a memoria secundaria
+            int pos = 0;
+
+            for(pos = 0; pos < secondaryMemory.Length; pos++) // procura um espaco disponivel na memoria secundaria
+            {
+                if(secondaryMemory[pos] == null || secondaryMemory[pos].isAvaliable)
+                {
+                    secondaryMemory[pos] = targetPage; // adiciona essa pagina a memoria secundaria
+                    break;
+                }
+            }
 
             Console.WriteLine("Secondary now:");
 
             foreach (Page p in secondaryMemory)
             {
-                Console.WriteLine("\n");
-                foreach (int i in p.content)
+                if (p != null)
                 {
-                    Console.WriteLine(i);
+                    Console.WriteLine("\n");
+
+                    foreach (int i in p.content)
+                    {
+                        Console.WriteLine(i);
+                    }
                 }
             }
 
@@ -277,7 +290,7 @@ namespace SO_T2
 
             job.pagesTable[frame].isAtSecondary = true;
             job.pagesTable[frame].isValid = false;
-            job.pagesTable[frame].posAtSecondary = secondaryMemory.IndexOf(targetPage);
+            job.pagesTable[frame].posAtSecondary = pos;
 
             pageInfo.ownJob.CleanPageTable(); // marca as paginas como invalidas
 
