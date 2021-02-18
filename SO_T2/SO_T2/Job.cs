@@ -80,6 +80,17 @@ namespace SO_T2
             for(int i = 0; i < pagesTable.Length; i++)
             {
                 pagesTable[i] = new PageInfo();
+                pagesTable[i].ownJob = this;
+                pagesTable[i].ownFrame = i;
+
+            }
+        }
+
+        public void CleanPageTable()
+        {
+            for (int i = 0; i < pagesTable.Length; i++)
+            {
+                pagesTable[i].isValid = false;
             }
         }
 

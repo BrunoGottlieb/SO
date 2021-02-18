@@ -129,7 +129,7 @@ namespace SO_T2
                 // DEBUG
                 {
                     Console.WriteLine("\ninstruction: " + instruction + " " + value);
-                    Console.WriteLine("\nPC: " + status.PC +"| \n\n");
+                    Console.WriteLine("\nPC: " + status.PC);
                 }
 
                 if (instruction == "CARGI") // coloca o valor n no acumulador (A=n)
@@ -139,10 +139,8 @@ namespace SO_T2
 
                 else if (instruction == "CARGM") // coloca no acumulador o valor na posição n da memória de dados (A=M[n])
                 {
-                    if (MMU.CheckViolation(value) || MMU.CheckPageFault(value))
-                    {
-                        status.InterruptionCode = violacao;
-                    }
+                    if (MMU.CheckViolation(value)) { status.InterruptionCode = violacao; }
+                    else if (MMU.CheckPageFault(value)) { status.InterruptionCode = pageFault; }
                     else
                     {
                         int returnedValue = MMU.GetDataMemoryByIndex(value);
@@ -152,19 +150,15 @@ namespace SO_T2
 
                 else if (instruction == "CARGX") // coloca no acumulador o valor na posição que está na posição n da memória de dados (A=M[M[n]])
                 {
-                    if (MMU.CheckViolation(value) || MMU.CheckPageFault(value))
-                    {
-                        status.InterruptionCode = violacao;
-                    }
+                    if (MMU.CheckViolation(value)) { status.InterruptionCode = violacao; }
+                    else if (MMU.CheckPageFault(value)) { status.InterruptionCode = pageFault; }
                     else
                     {
                         int pos = 0;
                         pos = MMU.GetDataMemoryByIndex(value);
 
-                        if (MMU.CheckViolation(pos) || MMU.CheckPageFault(pos))
-                        {
-                            status.InterruptionCode = violacao;
-                        }
+                        if (MMU.CheckViolation(pos)) { status.InterruptionCode = violacao; }
+                        else if (MMU.CheckPageFault(pos)) { status.InterruptionCode = pageFault; }
                         else
                         {
                             status.A = pos;
@@ -184,10 +178,8 @@ namespace SO_T2
 
                 else if (instruction == "ARMX") // 	coloca o valor do acumulador posição que está na posição n da memória de dados (M[M[n]]=A)
                 {
-                    if (MMU.CheckViolation(value) || MMU.CheckPageFault(value))
-                    {
-                        status.InterruptionCode = violacao;
-                    } 
+                    if (MMU.CheckViolation(value)) { status.InterruptionCode = violacao; }
+                    else if (MMU.CheckPageFault(value)) { status.InterruptionCode = pageFault; }
                     else
                     {
                         int pos = MMU.GetDataMemoryByIndex(value);
@@ -202,10 +194,8 @@ namespace SO_T2
 
                 else if (instruction == "SOMA") // 	soma ao acumulador o valor no endereço n da memória de dados (A=A+M[n])
                 {
-                    if (MMU.CheckViolation(value) || MMU.CheckPageFault(value))
-                    {
-                        status.InterruptionCode = violacao;
-                    }
+                    if (MMU.CheckViolation(value)) { status.InterruptionCode = violacao; }
+                    else if (MMU.CheckPageFault(value)) { status.InterruptionCode = pageFault; }
                     else
                     {
                         value = MMU.GetDataMemoryByIndex(value);
@@ -234,6 +224,8 @@ namespace SO_T2
                 }
 
                 UpdateCPUStatus(status); // atualiza o estado da CPU com os novos dados
+
+                if(status.InterruptionCode == pageFault || status.InterruptionCode == violacao) { updatePC = false; }
 
                 if (updatePC) { UpdatePC(); }
 

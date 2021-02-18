@@ -40,7 +40,7 @@ namespace SO_T2
             List<Job> jobs = new List<Job>();
             jobs.Add(job1);
             jobs.Add(job2);
-            jobs.Add(job3);
+            //jobs.Add(job3);
 
             JobManager.SetJobList(jobs); // carrega os jobs para o gerenciador de jobs
 

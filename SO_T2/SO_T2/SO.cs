@@ -11,7 +11,7 @@ namespace SO_T2
 
         public static string[] programMemory; // memoria de programa
 
-        public static Page[] secondaryMemory;
+        public static List<Page> secondaryMemory;
 
         // Constantes da CPU
         private const int normal = 0;
@@ -48,7 +48,7 @@ namespace SO_T2
 
             Memory.Init();
 
-            secondaryMemory = new Page[1000]; // aloca a memoria secundaria
+            secondaryMemory = new List<Page>();
 
             /// Timer.NewInterruption(JobManager.GetCurrentJob(), 'P', 50, ilegal); // interrupcao periodica do SO
 
@@ -195,29 +195,36 @@ namespace SO_T2
         private static void InitPage(int index) // inicializa uma nova pagina apos page default
         {
             int frame = index / Memory.pageSize; // numero do quadro para onde vai o dado
-            Console.WriteLine("frame: " + frame);
+            Console.WriteLine("\nIndex no SO: " + index + "\n");
+
+            Console.WriteLine("frame no SO: " + frame);
 
             Job currentJob = JobManager.GetCurrentJob(); // processo atual
 
             int physicalFrame = MMU.GetNextFreeFrame(); // descobre qual eh o proximo quadro livre da memoria fisica
             Console.WriteLine("physicalFrame: " + physicalFrame);
 
+            Console.WriteLine("\nValue: " + CPU.value + "\n");
+
             if (physicalFrame >= 0) // ha quadro disponivel
             {
-                Console.WriteLine("Ha quadro disponivel na memoria fisica. Quadro: " + physicalFrame);
+                Console.WriteLine("\nHa quadro disponivel na memoria fisica. Quadro: " + physicalFrame + "\n");
                 MMU.SetMemoryFrameValidity(physicalFrame, false); // mapeia a pagina na memoria fisica
+
+                if(currentJob.pagesTable[frame].isAtSecondary) // pagina ja existe e esta na memoria secundaria
+                {
+                    Console.WriteLine("\nQuadro " + frame + " ja estava na memoria\n");
+                    int pos = currentJob.pagesTable[frame].posAtSecondary; // posicao da pagina na memoria secundaria
+                    Memory.dataMemory[physicalFrame] = secondaryMemory[pos]; // retira da memoria secundaria e passa para a primaria
+                    secondaryMemory.RemoveAt(pos); // remove da memoria secundaria
+                }
 
                 currentJob.pagesTable[frame].frameNum = physicalFrame; // posicao dessa pagina na memoria fisica
                 Console.WriteLine("frameNum: " + currentJob.pagesTable[frame].frameNum);
 
                 currentJob.pagesTable[frame].isValid = true; // marca a pagina como valida
 
-                pagesFIFO.Enqueue(currentJob.pagesTable[frame]);
-                Console.WriteLine("\n\nFIFO: ###########################################################################");
-                foreach(PageInfo pageInfo in pagesFIFO)
-                {
-                    Console.WriteLine(pageInfo.frameNum);
-                }
+                pagesFIFO.Enqueue(currentJob.pagesTable[frame]); // adiciona a lista de filas na memoria principal
 
                 SetMMUPagesTable(); // envia a tabela de paginas do processo para a MMU
             }
@@ -225,9 +232,38 @@ namespace SO_T2
             {
                 // FIFO
 
-                Console.WriteLine("FIFO");
-                Environment.Exit(0);
+                Console.WriteLine("FIFO ########################################################################");
+
+                foreach (PageInfo pageInfo in pagesFIFO)
+                {
+                    Console.WriteLine(pageInfo.frameNum);
+                }
+
+                PageInfo pageTarget = pagesFIFO.Dequeue(); // retira a pagina da fila
+                Console.WriteLine("Target: " + pageTarget.frameNum); // informa o numero do quadro
+
+                AddToSecondaryMemory(pageTarget); // passa a pagina para a memoria secundaria
+
+                Console.WriteLine("\nPage now with: " + JobManager.GetCurrentJob().programName);
             }
+        }
+
+        // passa os quadros para a memoria secundaria e adiciona outra pagina no lugar
+        private static void AddToSecondaryMemory(PageInfo pageInfo)
+        {
+            Page targetPage = Memory.dataMemory[pageInfo.frameNum]; // pagina que sera retirada da memoria principal
+            secondaryMemory.Add(targetPage); // adiciona essa pagina a memoria secundaria
+
+            Job job = pageInfo.ownJob; // processo dono dessa pagina
+            int frame = pageInfo.ownFrame; // posicao dessa pagina no vetor do processo
+
+            job.pagesTable[frame].isAtSecondary = true;
+            job.pagesTable[frame].isValid = false;
+            job.pagesTable[frame].posAtSecondary = secondaryMemory.IndexOf(targetPage);
+
+            //pageInfo.ownJob.CleanPageTable(); // marca as paginas como invalidas
+            Memory.dataMemory[pageInfo.frameNum].Clean(); // libera a pagina na memoria principal
+            return;
         }
 
         // envia a tabela de paginas do processo para a MMU

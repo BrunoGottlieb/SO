@@ -42,9 +42,12 @@ namespace SO_T2
         {
             int frame = index / Memory.pageSize; // numero do quadro para onde vai o dado
 
+            Console.WriteLine("\nIndex na MMU: " + index + "\n");
+            Console.WriteLine("\nFrame na MMU: " + frame + "\n");
+
             if (pagesTable[frame].isValid == false) // confere se a pagina esta mapeada
             {
-                Console.WriteLine("\n\nPAGINA NAO MAPEADA: " + index + "\n\n");
+                Console.WriteLine("\n\nPAGINA NAO MAPEADA: " + frame + "\n\n");
                 return true; // retorna erro de falta de pagina
             }
 
