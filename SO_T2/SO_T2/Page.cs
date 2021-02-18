@@ -10,7 +10,8 @@ namespace SO_T2
 
         public bool isAvaliable { get; set; }
 
-        public Page(){
+        public Page()
+        {
             content = new int[Memory.pageSize];
             isAvaliable = true;
         }

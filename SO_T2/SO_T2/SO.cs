@@ -215,6 +215,13 @@ namespace SO_T2
                 {
                     Console.WriteLine("\nQuadro " + frame + " ja estava na memoria\n");
                     int pos = currentJob.pagesTable[frame].posAtSecondary; // posicao da pagina na memoria secundaria
+
+                    Console.WriteLine("\nConteudo desse quadro:");
+                    foreach(int i in secondaryMemory[pos].content)
+                    {
+                        Console.WriteLine(i);
+                    }
+
                     Memory.dataMemory[physicalFrame] = secondaryMemory[pos]; // retira da memoria secundaria e passa para a primaria
                     secondaryMemory.RemoveAt(pos); // remove da memoria secundaria
                 }
@@ -254,6 +261,17 @@ namespace SO_T2
             Page targetPage = Memory.dataMemory[pageInfo.frameNum]; // pagina que sera retirada da memoria principal
             secondaryMemory.Add(targetPage); // adiciona essa pagina a memoria secundaria
 
+            Console.WriteLine("Secondary now:");
+
+            foreach (Page p in secondaryMemory)
+            {
+                Console.WriteLine("\n");
+                foreach (int i in p.content)
+                {
+                    Console.WriteLine(i);
+                }
+            }
+
             Job job = pageInfo.ownJob; // processo dono dessa pagina
             int frame = pageInfo.ownFrame; // posicao dessa pagina no vetor do processo
 
@@ -261,8 +279,13 @@ namespace SO_T2
             job.pagesTable[frame].isValid = false;
             job.pagesTable[frame].posAtSecondary = secondaryMemory.IndexOf(targetPage);
 
-            //pageInfo.ownJob.CleanPageTable(); // marca as paginas como invalidas
-            Memory.dataMemory[pageInfo.frameNum].Clean(); // libera a pagina na memoria principal
+            pageInfo.ownJob.CleanPageTable(); // marca as paginas como invalidas
+
+            Memory.dataMemory[pageInfo.frameNum] = new Page(); // libera a pagina na memoria principal
+
+            Console.WriteLine("\nOwn: " + job.pagesTable[frame].ownJob.programName);
+            Console.WriteLine("\nPos at secondary: " + job.pagesTable[frame].posAtSecondary);
+
             return;
         }
 

@@ -79,6 +79,20 @@ namespace SO_T2
             paginaDescritor.isValid = true;
             Page page = Memory.dataMemory[paginaDescritor.frameNum]; // frame na memoria fisica, o descritor contem essa info ja do SO
             page.content[offset] = newData; // deslocamento dentro da pagina | recebe novo dado
+
+            Console.WriteLine("\n\n\n--------MEMORY---------\n\n\n");
+
+            foreach(Page p in Memory.dataMemory)
+            {
+                Console.WriteLine(p);
+                foreach (int i in p.content)
+                {
+                    Console.WriteLine(i);
+                }
+            }
+
+            Console.WriteLine("\n\n\n");
+
         }
 
         // ler um inteiro de uma posição de memória
