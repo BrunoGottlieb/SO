@@ -107,6 +107,15 @@ namespace SO_T2
             Environment.Exit(0);
         }
 
+        public static void PageFaultHandler()
+        {
+            Console.WriteLine("\nSO Page Fault Handler");
+            Console.WriteLine("CPU Value: " + CPU.value);
+            InitPage(CPU.value); // inicializa uma nova pagina
+            Status s = CPU.GetCPUStatus(); // salva o estado da CPU
+            s.InterruptionCode = normal; // coloca a CPU em estado dormindo
+        }
+
         private static void Read()
         {
             readCount++; // atualiza o numero de vezes que foi chamado por conta de leitura
@@ -129,7 +138,7 @@ namespace SO_T2
             j.UpdateJobCPUStatus(s); // salva o estado da CPU no job
             j.UpdateJobStatus(blocked); // bloqueia o job
 
-            Timer.NewInterruption(j, 'A', j.read_delay, ilegal); // programa o timer para gerar uma interrupção devido a esse dispositivo depois de um certo tempo e retorna
+            Timer.NewInterruption(j, 'A', j.read_delay, ilegal, -1); // programa o timer para gerar uma interrupção devido a esse dispositivo depois de um certo tempo e retorna
 
             return;
         }
@@ -154,18 +163,20 @@ namespace SO_T2
             j.UpdateJobCPUStatus(s); // salva o estado da CPU no job
             j.UpdateJobStatus(blocked); // bloqueia o job
 
-            Timer.NewInterruption(j, 'A', j.write_delay, ilegal); // programa o timer para gerar uma interrupção devido a esse dispositivo depois de um certo tempo e retorna
+            Timer.NewInterruption(j, 'A', j.write_delay, ilegal, -1); // programa o timer para gerar uma interrupção devido a esse dispositivo depois de um certo tempo e retorna
 
             return;
         }
 
-        public static void TimerCallBack(Job j, int newStatus) // chamado apos uma interrupcao terminar
+        public static void TimerCallBack(Job j, int newStatus, int frame) // chamado apos uma interrupcao terminar
         {
             Console.WriteLine("\nTIMER CALLBACK\n");
 
             timerCallBackCount++; // incrementa o numero de vezes que foi chamado pelo timer
 
             SOcalledCount++; // incrementa o numero de vezes que o SO foi chamado
+
+            lastExecutionTime = Timer.GetCurrentTime(); // atualiza o tempo que o SO foi chamado pela ultima vez
 
             if (CPU.GetCPUInterruptionCode() == sleeping) // CPU estava ociosa
             {
@@ -179,25 +190,53 @@ namespace SO_T2
                 changesByQuantumCount++; // atualiza o numero de vezes que o SO foi chamado por preempção
             }
 
-            lastExecutionTime = Timer.GetCurrentTime(); // atualiza o tempo que o SO foi chamado pela ultima vez
+            if(frame >= 0) // caso era uma operacao de memoria secundaria
+            {
+                j.UpdateJobStatus(newStatus); // seta o jog como normal novamente
+
+                pagesFIFO.Enqueue(j.pagesTable[frame]); // adiciona a lista de filas na memoria principal
+
+                SetMMUPagesTable(); // envia a tabela de paginas do processo para a MMU
+            }
+            else if (frame == -2)
+            {
+                FifoManager(j);
+            }
 
             j.UpdateJobStatus(newStatus);
 
-            //if(CPU.GetCPUInterruptionCode() != normal) { CPU.UpdatePC(); Console.WriteLine("Updating PC for " + JobManager.GetCurrentJob().programName); } // CPU normalizou, atualiza o valor de PC
-
             JobManager.InitNextJobOnCPU(); // chama outro processo para executar
 
-            //CPU.UpdatePC();
-
             return;
+        }
+
+        public static void FifoManager(Job job)
+        {
+            Console.WriteLine("FIFO ########################################################################");
+
+            foreach (PageInfo pageInfo in pagesFIFO)
+            {
+                Console.WriteLine(pageInfo.frameNum);
+            }
+
+            if(pagesFIFO.Count == 0) // nao ha pagina disponivel por enquanto
+            {
+                Status status = CPU.GetCPUStatus();
+                status.InterruptionCode = sleeping;
+                return;
+            }
+
+            PageInfo pageTarget = pagesFIFO.Dequeue(); // retira a pagina da fila
+            Console.WriteLine("Target: " + pageTarget.frameNum); // informa o numero do quadro
+
+            AddToSecondaryMemory(pageTarget); // passa a pagina para a memoria secundaria
+
+            Console.WriteLine("\nPage now with: " + job.programName);
         }
 
         private static void InitPage(int index) // inicializa uma nova pagina apos page default
         {
             int frame = index / Memory.pageSize; // numero do quadro para onde vai o dado
-            Console.WriteLine("\nIndex no SO: " + index + "\n");
-
-            Console.WriteLine("frame no SO: " + frame);
 
             Job currentJob = JobManager.GetCurrentJob(); // processo atual
 
@@ -211,25 +250,31 @@ namespace SO_T2
                 Console.WriteLine("\nHa quadro disponivel na memoria fisica. Quadro: " + physicalFrame + "\n");
                 MMU.SetMemoryFrameValidity(physicalFrame, false); // mapeia a pagina na memoria fisica
 
-                if(currentJob.pagesTable[frame].isAtSecondary) // pagina ja existe e esta na memoria secundaria
+                currentJob.pagesTable[frame].frameNum = physicalFrame; // posicao dessa pagina na memoria fisica
+                Console.WriteLine("frameNum: " + currentJob.pagesTable[frame].frameNum);
+
+                currentJob.pagesTable[frame].isValid = true; // marca a pagina como valida
+
+                if (currentJob.pagesTable[frame].isAtSecondary) // pagina ja existe e esta na memoria secundaria
                 {
                     Console.WriteLine("\nQuadro " + frame + " ja estava na memoria\n");
                     int pos = currentJob.pagesTable[frame].posAtSecondary; // posicao da pagina na memoria secundaria
 
                     Console.WriteLine("\nConteudo desse quadro:");
-                    foreach(int i in secondaryMemory[pos].content)
+                    foreach (int i in secondaryMemory[pos].content)
                     {
                         Console.WriteLine(i);
                     }
 
                     Memory.dataMemory[physicalFrame] = secondaryMemory[pos]; // retira da memoria secundaria e passa para a primaria
                     secondaryMemory[pos] = new Page(); // remove da memoria secundaria
+
+                    currentJob.jobStatus = blocked; // impede que esse processo venha a ser escalonado por enquanto
+
+                    Timer.NewInterruption(currentJob, 'A', currentJob.read_delay, ilegal, frame); // programa o timer para gerar uma interrupção devido a esse dispositivo depois de um certo tempo e retorna
+
+                    return;
                 }
-
-                currentJob.pagesTable[frame].frameNum = physicalFrame; // posicao dessa pagina na memoria fisica
-                Console.WriteLine("frameNum: " + currentJob.pagesTable[frame].frameNum);
-
-                currentJob.pagesTable[frame].isValid = true; // marca a pagina como valida
 
                 pagesFIFO.Enqueue(currentJob.pagesTable[frame]); // adiciona a lista de filas na memoria principal
 
@@ -237,21 +282,8 @@ namespace SO_T2
             }
             else
             {
-                // FIFO
-
-                Console.WriteLine("FIFO ########################################################################");
-
-                foreach (PageInfo pageInfo in pagesFIFO)
-                {
-                    Console.WriteLine(pageInfo.frameNum);
-                }
-
-                PageInfo pageTarget = pagesFIFO.Dequeue(); // retira a pagina da fila
-                Console.WriteLine("Target: " + pageTarget.frameNum); // informa o numero do quadro
-
-                AddToSecondaryMemory(pageTarget); // passa a pagina para a memoria secundaria
-
-                Console.WriteLine("\nPage now with: " + JobManager.GetCurrentJob().programName);
+                Timer.NewInterruption(currentJob, 'A', currentJob.read_delay, ilegal, -2); // programa o timer para gerar uma interrupção devido a esse dispositivo depois de um certo tempo e retorna
+                return;
             }
         }
 
@@ -307,15 +339,6 @@ namespace SO_T2
         {
             Job currentJob = JobManager.GetCurrentJob(); // processo atual
             MMU.pagesTable = currentJob.pagesTable;
-        }
-
-        public static void PageFaultHandler()
-        {
-            Console.WriteLine("\nSO Page Fault Handler");
-            Console.WriteLine("CPU Value: " + CPU.value);
-            InitPage(CPU.value); // inicializa uma nova pagina
-            Status s = CPU.GetCPUStatus(); // salva o estado da CPU
-            s.InterruptionCode = normal; // coloca a CPU em estado dormindo
         }
 
         public static void FinishExecution()

@@ -11,6 +11,7 @@ namespace SO_T2
         public int date { get; set; } // quando
         public int period { get; set; } // tempo original
         public int interruptionCode { get; set; } // que interrupcao sera gerada
+        public int frame { get; set; } // usado apenas para operacoes de memoria secundaria
     }
 
     class Timer
@@ -42,7 +43,7 @@ namespace SO_T2
                 Console.WriteLine("\n*** MAX QUANTUM ***\n");
                 Job currentJob = JobManager.GetCurrentJob();
                 currentJob.UpdateJobPriority(); // atualiza a prioridade pois o quantum acabou
-                SO.TimerCallBack(currentJob, 0); // gera uma interrupcao
+                SO.TimerCallBack(currentJob, 0, -1); // gera uma interrupcao
             }
         }
 
@@ -83,15 +84,15 @@ namespace SO_T2
                 queue.RemoveAt(0); // remove da fila
                 if (schedule.type == 'P')
                 {
-                    NewInterruption(schedule.job, 'P', schedule.period + currentTime, schedule.interruptionCode); // reinsere as periodicas
+                    NewInterruption(schedule.job, 'P', schedule.period + currentTime, schedule.interruptionCode, schedule.frame); // reinsere as periodicas
                 }
-                SO.TimerCallBack(schedule.job, 0);
+                SO.TimerCallBack(schedule.job, 0, schedule.frame);
                 return schedule.interruptionCode; // retorna o codigo da interrupcao
             }
         }
 
         // gerar novas interrupções – deve informar o tipo (periódica ou não), o período (tempo entre interrupções) ou tempo até a interrupção, e o código da interrupção que será gerada
-        public static void NewInterruption(Job j, char type, int date, int interruptionCode)
+        public static void NewInterruption(Job j, char type, int date, int interruptionCode, int frame)
         {
             Schedule newSchedule = new Schedule();
             newSchedule.job = j;
@@ -99,6 +100,7 @@ namespace SO_T2
             newSchedule.period = date;
             newSchedule.date = currentTime + date;
             newSchedule.interruptionCode = interruptionCode;
+            newSchedule.frame = frame;
 
             Console.WriteLine("\nCreating new interruption for time: " + newSchedule.date + "\n");
 
