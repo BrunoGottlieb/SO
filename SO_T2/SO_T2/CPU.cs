@@ -19,6 +19,7 @@ namespace SO_T2
         public const int violacao = 2;
         public const int sleeping = 3;
         public const int pageFault = 4;
+        public const int memoryLoss = 5;
 
         public static Status status = new Status(); // estado da CPU
 

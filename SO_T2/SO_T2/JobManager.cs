@@ -21,6 +21,17 @@ namespace SO_T2
             return jobs.Count;
         }
 
+        public static void SetJobOnCPU(Job targetJob)
+        {
+            if (targetJob != null)
+            {
+                if (!targetJob.isInitialized) { targetJob.Init(); } // inicializa o job
+                targetJob.PutJobOnCPU(); // colocar os dados do job na CPU
+                if (currentJob != targetJob) { SO.jobChangeCount++; } // atualiza o contador de troca de processos
+                currentJob = targetJob; // atualiza o processo que esta em execucao atualmente
+            }
+        }
+
         public static void InitNextJobOnCPU() // inicilizar CPU com os dados de um job
         {
             if (jobs.Count == 0) // nao ha mais nenhum job na lista

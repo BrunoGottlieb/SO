@@ -11,6 +11,7 @@ namespace SO_T2
         private const int violacao = 2;
         private const int sleeping = 3;
         public const int pageFault = 4;
+        public const int memoryLoss = 5;
 
         public void Execute()
         {
@@ -36,7 +37,7 @@ namespace SO_T2
                 {
                     SO.PageFaultHandler();
                 }
-                else if (interruptionCode == sleeping)
+                else if (interruptionCode == sleeping || interruptionCode == memoryLoss)
                 {
                     Console.WriteLine("CPU is sleeping"); // nothing
                 }
