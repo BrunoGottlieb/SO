@@ -13,6 +13,8 @@ namespace SO_T2
 
         public static Page[] secondaryMemory;
 
+        private static bool isUsing2ndChance = true; // false == FIFO
+
         // Constantes da CPU
         public const int normal = 0;
         public const int ilegal = 1;
@@ -38,7 +40,7 @@ namespace SO_T2
         public static int jobChangeCount = 0;
         private static int changesByQuantumCount = 0;
 
-        public static Queue<PageInfo> pagesFIFO = new Queue<PageInfo>();
+        public static Queue<PageInfo> queue = new Queue<PageInfo>();
 
         public static void Initialize()
         {
@@ -114,8 +116,6 @@ namespace SO_T2
             Console.WriteLine("\nSO Page Fault Handler");
             Console.WriteLine("CPU Value: " + CPU.value);
             InitPage(CPU.value); // inicializa uma nova pagina
-            //Status s = CPU.GetCPUStatus(); // salva o estado da CPU
-            //s.InterruptionCode = normal; // coloca a CPU em estado normal
         }
 
         private static void Read()
@@ -200,7 +200,7 @@ namespace SO_T2
 
                 j.UpdateJobStatus(newStatus); // seta o job como normal novamente
 
-                pagesFIFO.Enqueue(j.pagesTable[frame]); // adiciona a lista de filas na memoria principal
+                queue.Enqueue(j.pagesTable[frame]); // adiciona a lista de filas na memoria principal
 
                 SetMMUPagesTable(); // envia a tabela de paginas do processo para a MMU
 
@@ -212,8 +212,10 @@ namespace SO_T2
             }
             else if (frame == -2)
             {
-                Console.WriteLine("Fifo callback");
-                FifoManager(j);
+                Console.WriteLine("Queue callback");
+
+                QueueManager(j);
+
                 j.UpdateJobStatus(newStatus);
                 JobManager.SetJobOnCPU(j);
                 return;
@@ -230,25 +232,47 @@ namespace SO_T2
             return;
         }
 
-        public static void FifoManager(Job job)
+        public static void QueueManager(Job job)
         {
-            Console.WriteLine("FIFO ########################################################################");
-
-            foreach (PageInfo pageInfo in pagesFIFO)
+            foreach (PageInfo pageInfo in queue)
             {
                 Console.WriteLine(pageInfo.frameNum);
             }
 
             Status status = CPU.GetCPUStatus();
 
-            if (pagesFIFO.Count == 0 && status.InterruptionCode != sleeping) // nao ha pagina disponivel por enquanto
+            if (queue.Count == 0 && status.InterruptionCode != sleeping) // nao ha pagina disponivel por enquanto
             {
                 status.InterruptionCode = sleeping;
                 return;
             }
 
-            PageInfo pageTarget = pagesFIFO.Dequeue(); // retira a pagina da fila
+            PageInfo pageTarget = queue.Dequeue(); // retira a pagina da fila
             Console.WriteLine("Target: " + pageTarget.frameNum); // informa o numero do quadro
+
+            status.InterruptionCode = normal;
+
+            if (isUsing2ndChance)
+            {
+                Console.WriteLine("2nd Chance ########################################################################");
+
+                // se houver uma página no quadro escolhido e ela estiver com o bit “acessada” ligado, desliga o bit,
+                // move o quadro para o fim da fila e continua no próximo da fila
+                if (pageTarget.wasAccessed)
+                {
+                    pageTarget.wasAccessed = false;
+                    queue.Enqueue(pageTarget);
+                    //AddToSecondaryMemory(pageTarget); // passa a pagina para a memoria secundaria
+
+                    //JobManager.SetJobOnCPU(job); // Devolve o processo para a cpu
+
+                    return;
+
+                }
+
+            }
+
+            Console.WriteLine("FIFO ########################################################################");
 
             AddToSecondaryMemory(pageTarget); // passa a pagina para a memoria secundaria
 
@@ -256,9 +280,7 @@ namespace SO_T2
 
             JobManager.SetJobOnCPU(job); // Devolve o processo para a cpu
 
-            status.InterruptionCode = normal;
         }
-
         private static void InitPage(int index) // inicializa uma nova pagina apos page default
         {
             int frame = index / Memory.pageSize; // numero do quadro para onde vai o dado
@@ -306,7 +328,7 @@ namespace SO_T2
                     return;
                 }
 
-                pagesFIFO.Enqueue(currentJob.pagesTable[frame]); // adiciona a lista de filas na memoria principal
+                queue.Enqueue(currentJob.pagesTable[frame]); // adiciona a lista de filas na memoria principal
 
                 SetMMUPagesTable(); // envia a tabela de paginas do processo para a MMU
 
@@ -421,6 +443,8 @@ namespace SO_T2
             Console.WriteLine("Write: " + writeCount); //
             Console.WriteLine("Change execution count: " + jobChangeCount); // quantas trocas de processos houve
             Console.Write("Changes by quantum count: " + changesByQuantumCount); // quantas foram preempção
+
+            Console.Write("Using 2nd Chance: " + isUsing2ndChance); // informa se o metodo de segunda chance esta sendo usado
 
             Console.WriteLine("\n\n");
         }
