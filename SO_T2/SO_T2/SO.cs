@@ -32,6 +32,7 @@ namespace SO_T2
         private static int SOcalledCount = 0;
         private static int cpuIdleTime = 0;
 
+        private static int totalPageFaultCount = 0;
         private static int ilegalCount = 0;
         private static int violationCount = 0;
         private static int timerCallBackCount = 0;
@@ -113,6 +114,8 @@ namespace SO_T2
 
         public static void PageFaultHandler()
         {
+            totalPageFaultCount++;
+            JobManager.GetCurrentJob().pageFaultCount++;
             Console.WriteLine("\nSO Page Fault Handler");
             Console.WriteLine("CPU Value: " + CPU.value);
             InitPage(CPU.value); // inicializa uma nova pagina
@@ -206,6 +209,8 @@ namespace SO_T2
 
                 s.InterruptionCode = normal; // coloca a CPU em estado normal
 
+                j.PageChangeWaitingTime += Timer.currentTime - j.lastExecutionTime; // atualiza o tempo que passou esperando por troca de pagina
+
                 JobManager.SetJobOnCPU(j);
 
                 return;
@@ -215,6 +220,8 @@ namespace SO_T2
                 Console.WriteLine("Queue callback");
 
                 QueueManager(j);
+
+                j.queueWaitingTime += Timer.currentTime - j.lastExecutionTime; 
 
                 j.UpdateJobStatus(newStatus);
                 JobManager.SetJobOnCPU(j);
@@ -316,7 +323,7 @@ namespace SO_T2
                     Memory.dataMemory[physicalFrame] = secondaryMemory[pos]; // retira da memoria secundaria e passa para a primaria
                     secondaryMemory[pos] = new Page(); // remove da memoria secundaria
 
-                    currentJob.jobStatus = blocked; // impede que esse processo venha a ser escalonado por enquanto
+                    currentJob.UpdateJobStatus(blocked); // impede que esse processo venha a ser escalonado por enquanto
 
                     Console.WriteLine("\nCriando interrupcao para pegar o quadro da memoria secundaria:");
 
@@ -341,6 +348,7 @@ namespace SO_T2
                 Status status = CPU.GetCPUStatus();
                 if(status.InterruptionCode != memoryLoss) // gera uma interrupcao por conta disso, se ainda nao havia uma
                 {
+                    currentJob.UpdateJobStatus(blocked); // impede que esse processo venha a ser escalonado por enquanto
                     Timer.NewInterruption(currentJob, 'A', currentJob.read_delay, ilegal, -2); // programa o timer para gerar uma interrupção devido a esse dispositivo depois de um certo tempo e retorna
                 }
                 status.InterruptionCode = memoryLoss;
@@ -428,6 +436,10 @@ namespace SO_T2
                 Console.WriteLine("Block count: " + j.blockCount); // número de vezes que bloqueou
                 Console.WriteLine("Called count: " + j.calledCount); // número de vezes que foi escalonado
                 Console.WriteLine("Exceed quantum count: " + j.exceedTimeCount); // número de vezes que perdeu a CPU por preempção
+                Console.WriteLine("Total page memory: " + j.memoryUsage); // memoria utilizada
+                Console.WriteLine("Time spent waiting for page change: " + j.PageChangeWaitingTime); // tempo ocioso esperando por troca de pagina
+                Console.WriteLine("Time spent waiting for free memory: " + j.queueWaitingTime); // tempo ocioso esperando por escalonamento
+
             }
 
             Console.WriteLine("\n-- SO Stats --\n");
@@ -442,9 +454,10 @@ namespace SO_T2
             Console.WriteLine("Read: " + readCount); //
             Console.WriteLine("Write: " + writeCount); //
             Console.WriteLine("Change execution count: " + jobChangeCount); // quantas trocas de processos houve
-            Console.Write("Changes by quantum count: " + changesByQuantumCount); // quantas foram preempção
+            Console.WriteLine("Changes by quantum count: " + changesByQuantumCount); // quantas foram preempção
 
-            Console.Write("Using 2nd Chance: " + isUsing2ndChance); // informa se o metodo de segunda chance esta sendo usado
+            Console.WriteLine("Using 2nd Chance: " + isUsing2ndChance); // informa se o metodo de segunda chance esta sendo usado
+            Console.WriteLine("Total page fault count: " + totalPageFaultCount); // o numero total de falta de paginas
 
             Console.WriteLine("\n\n");
         }

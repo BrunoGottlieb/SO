@@ -32,8 +32,12 @@ namespace SO_T2
         public int blockCount; // quantas vezes foi bloqueado
         public int calledCount; // quantas vezes foi escalonado
         public int exceedTimeCount; // número de vezes que perdeu a CPU por preempção
+        public int pageFaultCount; // contador de falha de pagina
+        public int memoryUsage; // memoria utilizada
         public int timeSpentBlocked; // tempo bloqueado
         public int lastExecutionTime; // tempo da ultima execucao
+        public int PageChangeWaitingTime; // tempo ocioso esperando por troca de pagina
+        public int queueWaitingTime; // tempo ocioso esperando por escalonamento
 
         // CPU
         public Status cpu_status; // status da cpu
@@ -64,8 +68,12 @@ namespace SO_T2
             blockCount = 0;
             calledCount = 0;
             exceedTimeCount = 0;
+            pageFaultCount = 0;
             timeSpentBlocked = 0;
             lastExecutionTime = 0;
+            memoryUsage = 0;
+            PageChangeWaitingTime = 0;
+            queueWaitingTime = 0;
             launchDate = Timer.GetCurrentTime();
             priority = 0.5f;
             cpu_status = new Status();
@@ -134,6 +142,13 @@ namespace SO_T2
             finishDate = Timer.currentTime;
             jobStatus = finished;
             JobManager.RemoveJob(this);
+            foreach(PageInfo pageInfo in pagesTable)
+            {
+                if (pageInfo.frameNum != null && pageInfo.frameNum >= 0)
+                {
+                    memoryUsage++;
+                }
+            }
         }
 
         public void UpdateJobStatus(int state)
