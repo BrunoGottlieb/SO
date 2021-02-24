@@ -14,8 +14,8 @@ namespace SO_T2
             job1.programName = "LimitadoCPU"; // opcional, qualquer valor
             job1.input_path = "C://teste/LimitadoCPU.txt";
             job1.output_path = "C://teste/ES/";
-            job1.read_delay = 10;
-            job1.write_delay = 10;
+            job1.read_delay = 5;
+            job1.write_delay = 5;
             job1.memory = 100; // quantidade de memoria necessaria;
             job1.quantum = 30;
 
@@ -23,8 +23,8 @@ namespace SO_T2
             job2.programName = "LimitadoES";
             job2.input_path = "C://teste/LimitadoES.txt";
             job2.output_path = "C://teste/ES/";
-            job2.read_delay = 10;
-            job2.write_delay = 10;
+            job2.read_delay = 5;
+            job2.write_delay = 5;
             job2.memory = 100;
             job2.quantum = 30;
 
@@ -32,8 +32,8 @@ namespace SO_T2
             job3.programName = "Mistura"; // opcional, qualquer valor
             job3.input_path = "C://teste/Mistura.txt";
             job3.output_path = "C://teste/ES/";
-            job3.read_delay = 10;
-            job3.write_delay = 10;
+            job3.read_delay = 5;
+            job3.write_delay = 5;
             job3.memory = 100; // quantidade de memoria necessaria;
             job3.quantum = 30;
 

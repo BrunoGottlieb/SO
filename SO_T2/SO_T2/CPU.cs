@@ -184,8 +184,8 @@ namespace SO_T2
                     else
                     {
                         int pos = MMU.GetDataMemoryByIndex(value);
-                        if (MMU.CheckViolation(value)) { status.InterruptionCode = violacao; }
-                        else if (MMU.CheckPageFault(value)) { status.InterruptionCode = pageFault; }
+                        if (MMU.CheckViolation(pos)) { status.InterruptionCode = violacao; }
+                        else if (MMU.CheckPageFault(pos)) { status.InterruptionCode = pageFault; }
                         else
                         {
                             MMU.SetDataMemoryAtIndex(GetCPU_A(status), pos);

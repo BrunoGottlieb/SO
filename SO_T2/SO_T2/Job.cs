@@ -7,7 +7,7 @@ namespace SO_T2
 {
     class Job
     {
-        public PageInfo[] pagesTable = new PageInfo[Memory.pageQtd]; // tabela de páginas
+        public PageInfo[] pagesTable = new PageInfo[100]; // tabela de páginas
 
         private const int ready = 0;
         private const int blocked = 1;

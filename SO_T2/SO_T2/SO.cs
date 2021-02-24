@@ -108,16 +108,20 @@ namespace SO_T2
         public static void ViolationHandler()
         {
             violationCount++; // atualiza o numero de vezes que foi chamado por violacao
+            Job b = JobManager.GetCurrentJob();
+            b.UpdateTimeSpent(Timer.GetCurrentTime() - lastExecutionTime); // atualiza o tempo de execucao do job
+            lastExecutionTime = Timer.GetCurrentTime(); // atualiza o tempo que o SO foi chamado pela ultima vez
+
             Console.WriteLine("\nViolation ended");
             Environment.Exit(0);
         }
 
         public static void PageFaultHandler()
         {
+            //lastExecutionTime = Timer.GetCurrentTime(); // atualiza o tempo que o SO foi chamado pela ultima vez
             totalPageFaultCount++;
             JobManager.GetCurrentJob().pageFaultCount++;
-            Console.WriteLine("\nSO Page Fault Handler");
-            Console.WriteLine("CPU Value: " + CPU.value);
+            Console.WriteLine("\nSO Page Fault Handler\n");
             InitPage(CPU.value); // inicializa uma nova pagina
         }
 
@@ -181,11 +185,9 @@ namespace SO_T2
 
             SOcalledCount++; // incrementa o numero de vezes que o SO foi chamado
 
-            lastExecutionTime = Timer.GetCurrentTime(); // atualiza o tempo que o SO foi chamado pela ultima vez
-
             Status s = CPU.GetCPUStatus(); // salva o estado da CPU
 
-            if (CPU.GetCPUInterruptionCode() == sleeping) // CPU estava ociosa
+            if (CPU.GetCPUInterruptionCode() == sleeping || CPU.GetCPUInterruptionCode() == memoryLoss) // CPU estava ociosa
             {
                 cpuIdleTime += (Timer.GetCurrentTime() - lastExecutionTime); // atualiza o tempo com que a CPU ficou ociosa
             }
@@ -197,10 +199,10 @@ namespace SO_T2
                 changesByQuantumCount++; // atualiza o numero de vezes que o SO foi chamado por preempção
             }
 
-            if(frame >= 0) // caso era uma operacao de memoria secundaria
-            {
-                Console.WriteLine("Secondary callback");
+            lastExecutionTime = Timer.GetCurrentTime(); // atualiza o tempo que o SO foi chamado pela ultima vez
 
+            if (frame >= 0) // caso era uma operacao de memoria secundaria
+            {
                 j.UpdateJobStatus(newStatus); // seta o job como normal novamente
 
                 queue.Enqueue(j.pagesTable[frame]); // adiciona a lista de filas na memoria principal
@@ -217,11 +219,9 @@ namespace SO_T2
             }
             else if (frame == -2)
             {
-                Console.WriteLine("Queue callback");
-
                 QueueManager(j);
 
-                j.queueWaitingTime += Timer.currentTime - j.lastExecutionTime; 
+                j.queueWaitingTime += Timer.currentTime - j.lastExecutionTime;
 
                 j.UpdateJobStatus(newStatus);
                 JobManager.SetJobOnCPU(j);
@@ -232,7 +232,6 @@ namespace SO_T2
 
             if(s.InterruptionCode != memoryLoss)
             {
-                Console.WriteLine("\nMandara outro processo executar:\n");
                 JobManager.InitNextJobOnCPU(); // chama outro processo para executar
             }
 
@@ -241,6 +240,8 @@ namespace SO_T2
 
         public static void QueueManager(Job job)
         {
+            Console.WriteLine("Queue manager");
+
             foreach (PageInfo pageInfo in queue)
             {
                 Console.WriteLine(pageInfo.frameNum);
@@ -255,35 +256,24 @@ namespace SO_T2
             }
 
             PageInfo pageTarget = queue.Dequeue(); // retira a pagina da fila
-            Console.WriteLine("Target: " + pageTarget.frameNum); // informa o numero do quadro
 
             status.InterruptionCode = normal;
 
             if (isUsing2ndChance)
             {
-                Console.WriteLine("2nd Chance ########################################################################");
-
                 // se houver uma página no quadro escolhido e ela estiver com o bit “acessada” ligado, desliga o bit,
                 // move o quadro para o fim da fila e continua no próximo da fila
                 if (pageTarget.wasAccessed)
                 {
                     pageTarget.wasAccessed = false;
                     queue.Enqueue(pageTarget);
-                    //AddToSecondaryMemory(pageTarget); // passa a pagina para a memoria secundaria
-
-                    //JobManager.SetJobOnCPU(job); // Devolve o processo para a cpu
-
                     return;
 
                 }
 
             }
 
-            Console.WriteLine("FIFO ########################################################################");
-
             AddToSecondaryMemory(pageTarget); // passa a pagina para a memoria secundaria
-
-            Console.WriteLine("\nPage now with: " + job.programName);
 
             JobManager.SetJobOnCPU(job); // Devolve o processo para a cpu
 
@@ -295,26 +285,26 @@ namespace SO_T2
             Job currentJob = JobManager.GetCurrentJob(); // processo atual
 
             int physicalFrame = MMU.GetNextFreeFrame(); // descobre qual eh o proximo quadro livre da memoria fisica
-            Console.WriteLine("physicalFrame: " + physicalFrame);
+            //Console.WriteLine("physicalFrame: " + physicalFrame);
 
-            Console.WriteLine("\nValue: " + CPU.value + "\n");
+            //Console.WriteLine("\nValue: " + CPU.value + "\n");
 
             if (physicalFrame >= 0) // ha quadro disponivel
             {
-                Console.WriteLine("\nHa quadro disponivel na memoria fisica. Quadro: " + physicalFrame + "\n");
+                //Console.WriteLine("\nHa quadro disponivel na memoria fisica. Quadro: " + physicalFrame + "\n");
                 MMU.SetMemoryFrameValidity(physicalFrame, false); // mapeia a pagina na memoria fisica
 
                 currentJob.pagesTable[frame].frameNum = physicalFrame; // posicao dessa pagina na memoria fisica
-                Console.WriteLine("frameNum: " + currentJob.pagesTable[frame].frameNum);
+                //Console.WriteLine("frameNum: " + currentJob.pagesTable[frame].frameNum);
 
                 currentJob.pagesTable[frame].isValid = true; // marca a pagina como valida
 
                 if (currentJob.pagesTable[frame].isAtSecondary) // pagina ja existe e esta na memoria secundaria
                 {
-                    Console.WriteLine("\nQuadro " + frame + " ja estava na memoria\n");
+                    //Console.WriteLine("\nQuadro " + frame + " ja estava na memoria\n");
                     int pos = currentJob.pagesTable[frame].posAtSecondary; // posicao da pagina na memoria secundaria
 
-                    Console.WriteLine("\nConteudo desse quadro:");
+                    //Console.WriteLine("\nConteudo desse quadro:");
                     foreach (int i in secondaryMemory[pos].content)
                     {
                         Console.WriteLine(i);
@@ -323,14 +313,17 @@ namespace SO_T2
                     Memory.dataMemory[physicalFrame] = secondaryMemory[pos]; // retira da memoria secundaria e passa para a primaria
                     secondaryMemory[pos] = new Page(); // remove da memoria secundaria
 
+                    currentJob.UpdateTimeSpent(Timer.GetCurrentTime() - lastExecutionTime); // atualiza o tempo de execucao do job
                     currentJob.UpdateJobStatus(blocked); // impede que esse processo venha a ser escalonado por enquanto
 
-                    Console.WriteLine("\nCriando interrupcao para pegar o quadro da memoria secundaria:");
+                    //Console.WriteLine("\nCriando interrupcao para pegar o quadro da memoria secundaria:");
 
                     Timer.NewInterruption(currentJob, 'A', currentJob.read_delay, ilegal, frame); // programa o timer para gerar uma interrupção devido a esse dispositivo depois de um certo tempo e retorna
 
                     Status status = CPU.GetCPUStatus();
                     status.InterruptionCode = memoryLoss;
+
+                    lastExecutionTime = Timer.GetCurrentTime(); // atualiza o tempo que o SO foi chamado pela ultima vez
 
                     return;
                 }
@@ -344,14 +337,16 @@ namespace SO_T2
             }
             else
             {
-                Console.WriteLine("\nNao ha quadro disponivel em memoria\n");
+                //Console.WriteLine("\nNao ha quadro disponivel em memoria\n");
                 Status status = CPU.GetCPUStatus();
                 if(status.InterruptionCode != memoryLoss) // gera uma interrupcao por conta disso, se ainda nao havia uma
                 {
+                    currentJob.UpdateTimeSpent(Timer.GetCurrentTime() - lastExecutionTime); // atualiza o tempo de execucao do job
                     currentJob.UpdateJobStatus(blocked); // impede que esse processo venha a ser escalonado por enquanto
                     Timer.NewInterruption(currentJob, 'A', currentJob.read_delay, ilegal, -2); // programa o timer para gerar uma interrupção devido a esse dispositivo depois de um certo tempo e retorna
                 }
                 status.InterruptionCode = memoryLoss;
+                lastExecutionTime = Timer.GetCurrentTime(); // atualiza o tempo que o SO foi chamado pela ultima vez
                 return;
             }
         }
@@ -371,7 +366,7 @@ namespace SO_T2
                 }
             }
 
-            Console.WriteLine("Secondary now:");
+            /*Console.WriteLine("Secondary now:");
 
             foreach (Page p in secondaryMemory)
             {
@@ -384,7 +379,7 @@ namespace SO_T2
                         Console.WriteLine(i);
                     }
                 }
-            }
+            }*/
 
             Job job = pageInfo.ownJob; // processo dono dessa pagina
             int frame = pageInfo.ownFrame; // posicao dessa pagina no vetor do processo
@@ -396,9 +391,6 @@ namespace SO_T2
             pageInfo.ownJob.CleanPageTable(); // marca as paginas como invalidas
 
             Memory.dataMemory[pageInfo.frameNum] = new Page(); // libera a pagina na memoria principal
-
-            Console.WriteLine("\nOwn: " + job.pagesTable[frame].ownJob.programName);
-            Console.WriteLine("\nPos at secondary: " + job.pagesTable[frame].posAtSecondary);
 
             return;
         }

@@ -7,8 +7,8 @@ namespace SO_T2
     class Memory
     {
         public static Page[] dataMemory; // memoria fisica
-        public static int totalMemorySize = 10; // tamanho total da memoria
-        public static int pageSize = 10; // tamanho da pagina
+        public static int totalMemorySize = 12; // tamanho total da memoria
+        public static int pageSize = 1; // tamanho da pagina
         public static int frameSize = pageSize; // tamanho do quadro
 
         public static int pageQtd = totalMemorySize / pageSize;
